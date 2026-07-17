@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1409">
+<title>Shots</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/*__FONTS__*/
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+html,body { background:#0f1409; color:#fff; font-family:'Space Grotesk',-apple-system,system-ui,sans-serif; height:100%; overflow:hidden; }
+button { font-family:inherit; border:none; color:#fff; background:none; }
+.mono { font-family:'JetBrains Mono',ui-monospace,monospace; }
+.screen { display:none; flex-direction:column; height:100dvh; }
+.screen.on { display:flex; }
+.num { font-variant-numeric:tabular-nums; }
+
+/* ============ HOME ============ */
+#home { background:#0f1409; }
+.safeTop { height:calc(env(safe-area-inset-top) + 10px); flex:none; }
+#brandRow { flex:none; padding:6px 22px 4px; display:flex; align-items:center; justify-content:space-between; }
+#brandRow .wordmark { display:flex; align-items:center; gap:9px; font-size:19px; font-weight:700; letter-spacing:1px; }
+#homeGps { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1px; color:#9aa08f; }
+#homeScroll { flex:1; overflow:hidden; padding:14px 18px 0; display:flex; flex-direction:column; }
+#resumeBanner { display:none; align-items:center; justify-content:space-between; background:rgba(126,217,87,.12); border:1px solid rgba(126,217,87,.4); border-radius:16px; padding:12px 14px; margin-bottom:18px; }
+#resumeBanner .rb1 { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1.5px; color:#7ed957; }
+#resumeBanner .rb2 { font-size:15px; font-weight:600; margin-top:2px; }
+#btnResume { border-radius:11px; background:#7ed957; color:#0b1206; font-weight:700; font-size:13px; padding:9px 15px; }
+.sectLabel { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:2px; color:#8b917f; margin-bottom:10px; }
+#search { display:flex; align-items:center; gap:9px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:13px; padding:11px 14px; margin-bottom:14px; color:#8b917f; font-size:14px; }
+.courseRow { display:flex; align-items:center; gap:13px; background:#182110; border:1.5px solid #7ed957; border-radius:16px; padding:11px 13px; }
+.courseRow .thumb { width:52px; height:52px; border-radius:12px; overflow:hidden; flex:none; background:#2f4023; }
+.courseRow .cname { font-size:16px; font-weight:700; }
+.courseRow .cmeta { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10.5px; color:#9aa08f; margin-top:3px; }
+.courseRow .check { width:24px; height:24px; border-radius:50%; background:#7ed957; color:#0b1206; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none; }
+#homeCta { flex:none; padding:14px 18px calc(22px + env(safe-area-inset-bottom)); background:linear-gradient(transparent,#0f1409 30%); }
+#btnStart { width:100%; border-radius:18px; background:#7ed957; color:#0b1206; font-weight:700; font-size:20px; padding:19px 0; box-shadow:0 12px 24px -8px rgba(126,217,87,.6); }
+#homeFoot { display:flex; justify-content:center; gap:22px; margin-top:14px; font-size:13px; color:#9aa08f; }
+
+/* ============ PLAY ============ */
+#play { position:relative; background:#2c3d21; }
+#mapWrap { position:absolute; inset:0; }
+#mapWrap svg { display:block; width:100%; height:100%; }
+.scrimTop { position:absolute; top:0; left:0; right:0; height:210px; background:linear-gradient(#000000aa,transparent); pointer-events:none; }
+.scrimBot { position:absolute; bottom:0; left:0; right:0; height:230px; background:linear-gradient(transparent,#0b1206e0); pointer-events:none; }
+#gpsBadge { position:absolute; top:calc(env(safe-area-inset-top) + 10px); right:16px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1px; font-weight:600; }
+.gps-ok { color:#7ed957; } .gps-warn { color:#ffcf6b; } .gps-bad { color:#ff8a7a; }
+
+#strip { position:absolute; top:calc(env(safe-area-inset-top) + 34px); left:12px; right:12px; background:rgba(9,15,7,.62); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:11px 13px; }
+#stripTop { display:flex; align-items:center; justify-content:space-between; }
+#stripHole { font-size:24px; font-weight:700; letter-spacing:-.5px; line-height:1; }
+#stripPar { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:#b7d59a; margin-top:4px; letter-spacing:.5px; }
+#stripTotLbl { font-size:11px; font-family:'JetBrains Mono',ui-monospace,monospace; color:#9aa08f; letter-spacing:1px; text-align:right; }
+#stripTot { font-size:24px; font-weight:700; line-height:1; color:#7ed957; text-align:right; }
+#miniNine { display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-top:11px; }
+.mn { text-align:center; }
+.mn .mh { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; }
+.mn .ms { height:22px; border-radius:6px; background:rgba(255,255,255,.07); color:#c9ccc2; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+.mn.cur .ms { background:#7ed957; color:#0b1206; font-weight:700; }
+
+#clubChip { position:absolute; right:12px; width:132px; background:rgba(9,15,7,.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(126,217,87,.5); border-radius:16px; padding:11px 12px; box-shadow:0 10px 24px -8px rgba(0,0,0,.5); }
+#clubChip .cl { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; letter-spacing:1.5px; color:#8b917f; }
+#clubChip .cn { display:flex; align-items:baseline; justify-content:space-between; margin-top:3px; font-size:22px; font-weight:700; letter-spacing:-.5px; }
+#clubChip .cn span { color:#7ed957; font-size:13px; }
+#clubChip .cc { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#b7d59a; margin-top:3px; }
+
+#clubPop { position:absolute; left:12px; right:12px; display:none; background:#0b1206; border-radius:20px; padding:16px; border:1px solid rgba(255,255,255,.08); box-shadow:0 20px 40px -20px rgba(0,0,0,.5); z-index:5; }
+#clubPop.on { display:block; }
+#popHead { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1.5px; color:#8b917f; }
+#popHead span { color:#7ed957; font-size:13px; font-family:'Space Grotesk',sans-serif; }
+#popGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.popClub { border-radius:12px; background:rgba(255,255,255,.06); padding:9px 0; text-align:center; }
+.popClub .pn { font-size:15px; font-weight:700; }
+.popClub .pc { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; }
+.popClub.fit { background:#7ed957; color:#0b1206; box-shadow:0 6px 14px -6px rgba(126,217,87,.7); }
+.popClub.fit .pc { color:#12300a; }
+.popClub.sel { outline:1.5px solid #7ed957; }
+#popFoot { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:10px; }
+#popFoot button { border-radius:10px; background:rgba(255,255,255,.06); color:#9aa08f; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1px; padding:9px 0; }
+
+#sheet { position:absolute; left:12px; right:12px; bottom:calc(16px + env(safe-area-inset-bottom)); background:rgba(9,15,7,.74); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.12); border-radius:22px; padding:16px 16px 15px; }
+#sheetTop { display:flex; align-items:flex-end; justify-content:space-between; }
+#hero { font-size:56px; font-weight:700; letter-spacing:-2px; line-height:.85; }
+#hero span { font-size:20px; color:#b7d59a; font-weight:600; letter-spacing:0; }
+#heroSub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1.5px; color:#9aa08f; margin-top:6px; }
+#btnHit { border-radius:16px; background:#7ed957; color:#0b1206; font-weight:700; font-size:16px; padding:15px 20px; display:flex; align-items:center; gap:7px; box-shadow:0 8px 18px -6px rgba(126,217,87,.6); }
+#btnHit span { font-size:20px; line-height:1; }
+#quick { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+#quick button { border-radius:12px; background:rgba(255,255,255,.09); color:#fff; font-weight:600; font-size:13px; padding:11px 0; }
+#toast { position:absolute; left:0; right:0; bottom:calc(190px + env(safe-area-inset-bottom)); text-align:center; pointer-events:none; }
+#toast div { display:inline-block; background:rgba(11,18,6,.85); border:1px solid rgba(255,255,255,.18); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; padding:5px 12px; border-radius:12px; }
+
+/* ============ SCORECARD ============ */
+#cardScr { background:#0f1409; }
+#cardNav { padding:6px 20px 4px; display:flex; align-items:center; justify-content:space-between; }
+#cardBack { font-size:15px; color:#7ed957; }
+#cardTitle { font-size:17px; font-weight:700; letter-spacing:-.3px; }
+#cardShare { font-size:15px; color:#9aa08f; }
+#cardDate { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:#8b917f; text-align:center; letter-spacing:1px; padding-bottom:10px; }
+#cardBody { flex:1; overflow-y:auto; padding:0 14px; display:flex; flex-direction:column; gap:14px; }
+.nineBlk { background:#161d0e; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:12px 12px 14px; }
+.nineBlk .blkLbl { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1.5px; color:#7ed957; margin-bottom:9px; }
+.nineGrid { display:grid; grid-template-columns:34px repeat(10,1fr); gap:0; font-variant-numeric:tabular-nums; }
+.ng-lbl { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; padding:4px 0; }
+.ng-h { text-align:center; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#c9ccc2; padding:3px 0; }
+.ng-h.tot, .ng-p.tot { color:#7ed957; }
+.ng-p { text-align:center; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:#9aa08f; padding:5px 0; }
+.ng-s { display:flex; justify-content:center; padding:2px 0; }
+.cell { width:22px; height:22px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.cell.birdie { border:1.5px solid #7ed957; border-radius:50%; color:#7ed957; }
+.cell.bogey { background:#3a2c12; border-radius:5px; color:#ffcf6b; }
+.cell.dbl { background:#4a1410; border-radius:5px; color:#ff8a7a; }
+#cardTotals { flex:none; padding:14px 18px 12px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid rgba(255,255,255,.08); }
+.totLbl { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#8b917f; letter-spacing:1px; }
+.totVal { font-size:28px; font-weight:700; line-height:1; }
+#cardCta { flex:none; padding:0 18px calc(18px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:8px; }
+#btnExportRound { display:none; width:100%; border-radius:16px; background:#7ed957; color:#0b1206; font-weight:700; font-size:17px; padding:15px 0; box-shadow:0 8px 18px -6px rgba(126,217,87,.6); }
+#btnEndEarly { display:none; width:100%; border-radius:12px; background:rgba(255,86,70,.12); border:1px solid rgba(255,86,70,.35); color:#ff8a7a; font-weight:600; font-size:13px; padding:11px 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<div id="home" class="screen on">
+  <div class="safeTop"></div>
+  <div id="brandRow">
+    <div class="wordmark">
+      <svg width="20" height="24" viewBox="0 0 20 24"><line x1="3" y1="2" x2="3" y2="23" stroke="#f4f4f4" stroke-width="2"/><path d="M3 2 L17 6 L3 10 Z" fill="#ff5646"/></svg>
+      SHOTS
+    </div>
+    <div id="homeGps">▲ GPS —</div>
+  </div>
+  <div id="homeScroll">
+    <div id="resumeBanner">
+      <div>
+        <div class="rb1">ROUND IN PROGRESS</div>
+        <div class="rb2" id="resumeInfo">Werribee Park</div>
+      </div>
+      <button id="btnResume">Resume</button>
+    </div>
+    <div class="sectLabel">SELECT COURSE</div>
+    <div id="search"><span>⌕</span><span>Search courses near you</span></div>
+    <div class="courseRow">
+      <div class="thumb"><svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" fill="#2f4023"/><path d="M20 46 Q14 30 24 16 Q30 8 34 6" stroke="#5b8a39" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="34" cy="9" r="6" fill="#8fce54"/></svg></div>
+      <div style="flex:1;">
+        <div class="cname">Werribee Park GC</div>
+        <div class="cmeta">WERRIBEE VIC · 18 HOLES · PAR 72</div>
+      </div>
+      <div class="check">✓</div>
+    </div>
+  </div>
+  <div id="homeCta">
+    <button id="btnStart">Start round ▸</button>
+    <div id="homeFoot"><span id="pastRounds">0 past rounds</span><span style="opacity:.4;">·</span><span id="btnExportAll">Export data</span></div>
+  </div>
+</div>
+
+<!-- ============ PLAY ============ -->
+<div id="play" class="screen">
+  <div id="mapWrap"></div>
+  <div class="scrimTop"></div>
+  <div class="scrimBot"></div>
+  <div id="gpsBadge" class="gps-bad">▲ NO GPS</div>
+
+  <div id="strip">
+    <div id="stripTop">
+      <div>
+        <div id="stripHole">Hole 1</div>
+        <div id="stripPar">PAR 4 · 299 M</div>
+      </div>
+      <div>
+        <div id="stripTotLbl">TOTAL</div>
+        <div id="stripTot">E</div>
+      </div>
+    </div>
+    <div id="miniNine"></div>
+  </div>
+
+  <div id="clubChip">
+    <div class="cl">CLUB</div>
+    <div class="cn"><div id="chipName">—</div><span>▾</span></div>
+    <div class="cc" id="chipCarry">tap to select</div>
+  </div>
+
+  <div id="clubPop">
+    <div id="popHead"><div id="popTitle">SELECT CLUB</div><span>▴</span></div>
+    <div id="popGrid"></div>
+    <div id="popFoot">
+      <button id="btnMissed">MISSED ONE</button>
+      <button id="btnEditClub">EDIT LAST CLUB</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="sheet">
+    <div id="sheetTop">
+      <div>
+        <div id="hero" class="num">–<span> m</span></div>
+        <div id="heroSub">TO CENTER</div>
+      </div>
+      <button id="btnHit"><span>＋</span>Track shot</button>
+    </div>
+    <div id="quick">
+      <button id="btnPutt">＋ Putt</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnNext">Next ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCORECARD ============ -->
+<div id="cardScr" class="screen">
+  <div class="safeTop"></div>
+  <div id="cardNav">
+    <button id="cardBack">‹ Map</button>
+    <div id="cardTitle">Scorecard</div>
+    <button id="cardShare">⤴</button>
+  </div>
+  <div id="cardDate">WERRIBEE PARK</div>
+  <div id="cardBody"></div>
+  <div id="cardTotals">
+    <div style="display:flex;gap:24px;">
+      <div><div class="totLbl">GROSS</div><div class="totVal num" id="totGross">–</div></div>
+      <div><div class="totLbl">PAR</div><div class="totVal num" style="color:#9aa08f;" id="totPar">72</div></div>
+    </div>
+    <div style="text-align:right;"><div class="totLbl">TO PAR</div><div class="totVal num" id="totDiff">–</div></div>
+  </div>
+  <div id="cardCta">
+    <button id="btnExportRound">Export round</button>
+    <button id="btnEndEarly">End round early</button>
+  </div>
+</div>
+
+<script>
+/*__COURSE_DATA__*/
+
+// The bag. Edit ids/names/carries to match reality; carries are display-only
+// presets for the club picker, never stored with a shot.
+const CLUBS = [
+  { id:"DR",   name:"Driver",      carry:230 },
+  { id:"3W",   name:"3 wood",      carry:215 },
+  { id:"5W",   name:"5 wood",      carry:200 },
+  { id:"4H",   name:"4 hybrid",    carry:190 },
+  { id:"5i",   name:"5 iron",      carry:180 },
+  { id:"6i",   name:"6 iron",      carry:170 },
+  { id:"7i",   name:"7 iron",      carry:158 },
+  { id:"8i",   name:"8 iron",      carry:146 },
+  { id:"9i",   name:"9 iron",      carry:135 },
+  { id:"PW",   name:"Pitch wedge", carry:120 },
+  { id:"GW",   name:"Gap wedge",   carry:105 },
+  { id:"SW",   name:"Sand wedge",  carry:90 },
+  { id:"LW",   name:"Lob wedge",   carry:70 },
+  { id:"CHIP", name:"Chip",        carry:35 },
+];
+const clubName = id => { const c = CLUBS.find(c => c.id === id); return c ? c.name : id; };
+
+const LS_CUR = "golf_current_v1";
+const LS_ROUNDS = "golf_rounds_v1";
+const ACC_LIMIT = 8;
+const FIX_FRESH_MS = 10000;
+const FIX_DEAD_MS = 45000;
+
+// ---------- state ----------
+let round = null;
+let lastFix = null;
+let lastRawAcc = null;
+let selClub = null;      // persists between shots (design behavior); change via chip
+let pickMode = "select"; // select | missed | edit
+let target = null;       // tap-to-aim point on map
+let mapFit = null;
+let watchId = null;
+let wakeLock = null;
+let toastTimer = null;
+let viewRound = null;    // round shown on scorecard screen
+let cardFinal = false;
+
+const $ = id => document.getElementById(id);
+
+// ---------- persistence ----------
+function saveCur() { localStorage.setItem(LS_CUR, JSON.stringify(round)); }
+function loadCur() { try { return JSON.parse(localStorage.getItem(LS_CUR)); } catch { return null; } }
+function loadRounds() { try { return JSON.parse(localStorage.getItem(LS_ROUNDS)) || []; } catch { return []; } }
+
+// ---------- geometry ----------
+function hav(aLat, aLon, bLat, bLon) {
+  const r = Math.PI / 180, R = 6371000;
+  const s = Math.sin((bLat-aLat)*r/2)**2 + Math.cos(aLat*r)*Math.cos(bLat*r)*Math.sin((bLon-aLon)*r/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// ---------- GPS ----------
+function startGPS() {
+  if (watchId !== null || !("geolocation" in navigator)) return;
+  watchId = navigator.geolocation.watchPosition(onFix, () => {}, {
+    enableHighAccuracy: true, maximumAge: 0, timeout: 5000
+  });
+}
+function stopGPS() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+}
+function onFix(pos) {
+  lastRawAcc = pos.coords.accuracy;
+  if (pos.coords.accuracy <= ACC_LIMIT) {
+    lastFix = { lat: pos.coords.latitude, lon: pos.coords.longitude,
+                accuracy: pos.coords.accuracy, fixTs: Date.now() };
+  }
+  render();
+}
+function fixFresh() { return lastFix && (Date.now() - lastFix.fixTs) < FIX_DEAD_MS; }
+
+// ---------- wake lock ----------
+async function acquireLock() {
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => { wakeLock = null; });
+  } catch { wakeLock = null; }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    if (round) { acquireLock(); startGPS(); }
+  } else {
+    stopGPS();
+  }
+});
+document.addEventListener("click", () => { if (round && !wakeLock) acquireLock(); });
+
+// ---------- round data ----------
+function shotsOf(r, h) { return r.shots.filter(s => s.hole === h); }
+function holeShots(h) { return shotsOf(round, h); }
+function swings(h) { return holeShots(h).filter(s => s.club !== "PUTT"); }
+function putts(h) { return holeShots(h).filter(s => s.club === "PUTT"); }
+function curHole() { return COURSE.holes.find(x => x.num === round.hole); }
+function toParStr(d) { return d === 0 ? "E" : (d > 0 ? "+" + d : String(d)); }
+function totals(r) {
+  let gross = 0, parPlayed = 0, playedHoles = 0;
+  for (const h of COURSE.holes) {
+    const n = shotsOf(r, h.num).length;
+    if (n) { gross += n; parPlayed += h.par; playedHoles++; }
+  }
+  return { gross, parPlayed, playedHoles, diff: gross - parPlayed };
+}
+
+function startRound() {
+  round = { id: Date.now(), course: COURSE.name, startTs: Date.now(), hole: 1, shots: [] };
+  saveCur();
+  enterPlay();
+}
+function resumeRound() {
+  round = loadCur();
+  if (round) enterPlay();
+}
+function enterPlay() {
+  show("play");
+  acquireLock();
+  startGPS();
+  render();
+}
+
+function appendShot(club, useFix, estimated) {
+  const h = round.hole;
+  const fixOk = useFix && fixFresh();
+  const shot = {
+    ts: Date.now(),
+    lat: fixOk ? lastFix.lat : null,
+    lon: fixOk ? lastFix.lon : null,
+    accuracy: fixOk ? lastFix.accuracy : null,
+    fixTs: fixOk ? lastFix.fixTs : null,
+    club, hole: h,
+    shotNum: holeShots(h).length + 1
+  };
+  if (estimated || (useFix && !fixOk)) shot.estimated = true;
+  round.shots.push(shot);
+  saveCur();
+  return shot;
+}
+
+function hit() {
+  if (!selClub) { openPop("select"); return; }
+  const shot = appendShot(selClub, true, false);
+  if (shot.lat == null) toast(clubName(selClub).toUpperCase() + " · NO POSITION");
+  else toast(clubName(selClub).toUpperCase() + " TRACKED");
+  render();
+}
+function addPutt() { appendShot("PUTT", false, false); toast("PUTT " + putts(round.hole).length); render(); }
+function undo() {
+  const last = round.shots[round.shots.length - 1];
+  if (!last) return;
+  if (!confirm("Remove last: " + clubName(last.club) + " (hole " + last.hole + ")?")) return;
+  round.shots.pop();
+  saveCur(); render();
+}
+function nextHole() {
+  if (round.hole >= 18) { finishRound(); return; }
+  round.hole++;
+  target = null;
+  saveCur(); render();
+}
+function finishRound() {
+  if (!confirm("Finish round?")) return;
+  archive();
+}
+function endEarly() {
+  if (!confirm("End round early?")) return;
+  archive();
+}
+function archive() {
+  round.endTs = Date.now();
+  const rounds = loadRounds();
+  rounds.push(round);
+  localStorage.setItem(LS_ROUNDS, JSON.stringify(rounds));
+  const finished = round;
+  localStorage.removeItem(LS_CUR);
+  round = null;
+  stopGPS();
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  openCard(finished, true);
+}
+
+// ---------- export ----------
+async function exportText(text, label) {
+  if (navigator.share) {
+    try { await navigator.share({ title: label, text }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); alert(label + " copied to clipboard"); }
+  catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+    alert(label + " copied to clipboard");
+  }
+}
+
+// ---------- map (SVG) ----------
+function esc(s) { return String(s); }
+function buildFit(hole, w, h, top, bottom) {
+  const ref = hole.green.centre;
+  const toM = p => [
+    (p[1] - ref[1]) * Math.cos(ref[0] * Math.PI / 180) * 111320,
+    (p[0] - ref[0]) * 110540
+  ];
+  const teePt = Object.values(hole.tees)[0] || hole.green.centre;
+  const [vE, vN] = toM(teePt).map(x => -x);
+  const A = Math.atan2(vE, vN);
+  const cosA = Math.cos(A), sinA = Math.sin(A);
+  const rot = p => { const [E, N] = toM(p); return [cosA*E - sinA*N, sinA*E + cosA*N]; };
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const eat = p => { const [x, y] = rot(p); minX = Math.min(minX,x); maxX = Math.max(maxX,x); minY = Math.min(minY,y); maxY = Math.max(maxY,y); };
+  hole.green.poly.forEach(eat);
+  Object.values(hole.tees).forEach(eat);
+  hole.features.forEach(f => f.poly.forEach(eat));
+  const pad = 15;
+  minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+  const bw = w - 24, bh = (h - bottom) - top;
+  const scale = Math.min(bw / (maxX - minX), bh / (maxY - minY));
+  const ox = 12 + (bw - (maxX - minX) * scale) / 2;
+  const oy = top + (bh - (maxY - minY) * scale) / 2;
+  return {
+    toPx: p => { const [x, y] = rot(p); return [ox + (x - minX) * scale, top + bh - (oy - top) - (y - minY) * scale]; },
+    toLL: (px, py) => {
+      const x = (px - ox) / scale + minX;
+      const y = (top + bh - (oy - top) - py) / scale + minY;
+      const E = cosA*x + sinA*y, N = -sinA*x + cosA*y;
+      return [ref[0] + N / 110540, ref[1] + E / (111320 * Math.cos(ref[0] * Math.PI / 180))];
+    }
+  };
+}
+
+function pill(x, y, txt, opts) {
+  opts = opts || {};
+  const fs = opts.fs || 10;
+  const w = txt.length * fs * 0.62 + 14, hh = fs + 10;
+  const bx = Math.max(4, Math.min(x - w / 2, ($("mapWrap").clientWidth || 390) - w - 4));
+  const by = y - hh / 2;
+  return '<g><rect x="' + bx + '" y="' + by + '" width="' + w + '" height="' + hh + '" rx="' + (hh/2) +
+    '" fill="' + (opts.bg || "rgba(11,18,6,.85)") + '"' + (opts.border ? ' stroke="' + opts.border + '" stroke-width="1"' : '') +
+    '/><text x="' + (bx + w/2) + '" y="' + (by + hh/2 + fs*0.36) + '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="' + fs +
+    '" font-weight="' + (opts.fw || 600) + '" fill="' + (opts.color || "#c9ccc2") + '">' + esc(txt) + '</text></g>';
+}
+
+function drawMap() {
+  const wrap = $("mapWrap");
+  const hole = curHole();
+  if (!hole || !hole.green) return;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (w < 10 || h < 10) return;
+  const stripB = $("strip").getBoundingClientRect().bottom + 46;
+  const sheetT = h - ($("sheet").getBoundingClientRect().height + 40 + 16);
+  mapFit = buildFit(hole, w, h, stripB, h - sheetT);
+  const T = mapFit.toPx;
+  const path = (pts, fill, stroke, sw) => {
+    let d = "M" + pts.map(p => T(p).map(v => v.toFixed(1)).join(" ")).join("L") + "Z";
+    return '<path d="' + d + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="' + (sw||1) + '"' : '') + '/>';
+  };
+  let s = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="#2f4023"/>';
+  s += '<ellipse cx="' + (w*0.3) + '" cy="' + (h*0.3) + '" rx="' + (w*0.38) + '" ry="' + (h*0.28) + '" fill="#33471f" opacity=".55"/>';
+  s += '<ellipse cx="' + (w*0.77) + '" cy="' + (h*0.7) + '" rx="' + (w*0.38) + '" ry="' + (h*0.25) + '" fill="#33471f" opacity=".5"/>';
+  for (const f of hole.features) if (f.type === "fairway") s += path(f.poly, "#5b8a39", "#4c7530", 1);
+  for (const f of hole.features) if (f.type === "water") s += path(f.poly, "#3c6478", "#4d7890", 1);
+  for (const f of hole.features) if (f.type === "bunker") s += path(f.poly, "#e6d7a4", "#cdba7f", 1);
+  s += path(hole.green.poly, "#8fce54", "#a7e06a", 1.5);
+
+  // tee box
+  const tee0 = Object.values(hole.tees)[0];
+  if (tee0) { const [tx, ty] = T(tee0); s += '<rect x="' + (tx-8) + '" y="' + (ty-6) + '" width="16" height="12" rx="3" fill="#cdba7f"/>'; }
+
+  // shot path
+  const pts = swings(round.hole).filter(x => x.lat != null);
+  const me = fixFresh() ? [lastFix.lat, lastFix.lon] : null;
+  const chain = pts.map(x => ({ p: [x.lat, x.lon], club: x.club }));
+  const segs = [];
+  for (let i = 0; i < chain.length - 1; i++) segs.push({ a: chain[i].p, b: chain[i+1].p, club: chain[i].club });
+  if (me && chain.length) segs.push({ a: chain[chain.length-1].p, b: me, club: chain[chain.length-1].club });
+  let labels = "";
+  for (const g of segs) {
+    const [ax, ay] = T(g.a), [bx, by] = T(g.b);
+    s += '<line x1="' + ax + '" y1="' + ay + '" x2="' + bx + '" y2="' + by + '" stroke="#fff" stroke-width="2.6" stroke-dasharray="1 9" stroke-linecap="round" opacity=".9"/>';
+    const d = hav(g.a[0], g.a[1], g.b[0], g.b[1]);
+    if (d > 25) labels += pill((ax+bx)/2 + 6, (ay+by)/2, clubName(g.club).toUpperCase() + " · " + Math.round(d) + " m", { fs:10.5, border:"rgba(255,255,255,.18)", color:"#fff" });
+  }
+
+  // aim + fan lines from current position
+  const gC = hole.green.centre, gF = hole.green.front, gB = hole.green.back;
+  if (me) {
+    const [mx, my] = T(me);
+    const aimTo = target || gC;
+    const [axp, ayp] = T(aimTo);
+    for (const gp of [gF, gB]) {
+      const [fx, fy] = T(gp);
+      s += '<line x1="' + mx + '" y1="' + my + '" x2="' + fx + '" y2="' + fy + '" stroke="#fff" stroke-width="1.4" stroke-dasharray="4 5" opacity=".3"/>';
+    }
+    s += '<line x1="' + mx + '" y1="' + my + '" x2="' + axp + '" y2="' + ayp + '" stroke="#fff" stroke-width="2" stroke-dasharray="1 7" stroke-linecap="round" opacity=".85"/>';
+    if (target) {
+      const [gx, gy] = T(gC);
+      s += '<line x1="' + axp + '" y1="' + ayp + '" x2="' + gx + '" y2="' + gy + '" stroke="#ffd60a" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity=".8"/>';
+      s += '<circle cx="' + axp + '" cy="' + ayp + '" r="9" fill="none" stroke="#ffd60a" stroke-width="2.5"/>';
+      labels += pill((mx+axp)/2 - 10, (my+ayp)/2, Math.round(hav(me[0], me[1], target[0], target[1])) + " m", { fs:11, color:"#ffd60a", border:"rgba(255,214,10,.4)" });
+      labels += pill((axp+T(gC)[0])/2 + 10, (ayp+T(gC)[1])/2, Math.round(hav(target[0], target[1], gC[0], gC[1])) + " m", { fs:10, color:"#ffd60a" });
+    }
+    // ball marker
+    s += '<circle cx="' + mx + '" cy="' + my + '" r="12" fill="rgba(255,255,255,.25)"/><circle cx="' + mx + '" cy="' + my + '" r="8" fill="#fff"/>';
+  }
+
+  // flagstick
+  const [gx, gy] = T(gC);
+  s += '<line x1="' + gx + '" y1="' + gy + '" x2="' + gx + '" y2="' + (gy-20) + '" stroke="#f4f4f4" stroke-width="2"/>';
+  s += '<path d="M' + gx + ' ' + (gy-20) + ' L' + (gx+15) + ' ' + (gy-16) + ' L' + gx + ' ' + (gy-11) + ' Z" fill="#ff5646"/>';
+
+  // distance pins F/C/B
+  if (me) {
+    const dC = Math.round(hav(me[0], me[1], gC[0], gC[1]));
+    const dF = Math.round(hav(me[0], me[1], gF[0], gF[1]));
+    const dB = Math.round(hav(me[0], me[1], gB[0], gB[1]));
+    labels += pill(gx, gy - 34, dC + " ctr", { fs:13, fw:700, bg:"#0b1206", border:"#ff5646", color:"#fff" });
+    const [fx, fy] = T(gF), [bx2, by2] = T(gB);
+    labels += pill(fx - 34, fy + 6, "F " + dF, {});
+    labels += pill(bx2 + 34, by2 - 6, "B " + dB, {});
+  }
+  if (tee0) { const [tx, ty] = T(tee0); labels += pill(tx, ty + 18, "TEE", { fs:9, fw:700 }); }
+
+  s += labels + "</svg>";
+  wrap.innerHTML = s;
+}
+
+$("mapWrap").addEventListener("click", e => {
+  if (!mapFit || !round) return;
+  if ($("clubPop").classList.contains("on")) { closePop(); return; }
+  const rect = $("mapWrap").getBoundingClientRect();
+  const ll = mapFit.toLL(e.clientX - rect.left, e.clientY - rect.top);
+  if (target && hav(target[0], target[1], ll[0], ll[1]) < 12) target = null;
+  else target = ll;
+  render();
+});
+
+// ---------- club popover ----------
+function openPop(mode) {
+  pickMode = mode;
+  const hole = curHole();
+  const dist = (fixFresh() && hole && hole.green) ? Math.round(hav(lastFix.lat, lastFix.lon, hole.green.centre[0], hole.green.centre[1])) : null;
+  $("popTitle").textContent =
+    mode === "missed" ? "MISSED ONE — WHAT DID YOU HIT?" :
+    mode === "edit" ? "EDIT LAST CLUB" :
+    "SELECT CLUB" + (dist ? " · " + dist + " M TO PIN" : "");
+  let fitId = null;
+  if (dist) fitId = CLUBS.reduce((a, c) => Math.abs(c.carry - dist) < Math.abs(a.carry - dist) ? c : a, CLUBS[0]).id;
+  const g = $("popGrid");
+  g.innerHTML = "";
+  for (const c of CLUBS) {
+    const b = document.createElement("button");
+    b.className = "popClub" + (mode === "select" && c.id === fitId ? " fit" : "") + (c.id === selClub ? " sel" : "");
+    b.innerHTML = '<div class="pn">' + c.id + '</div><div class="pc">' + c.carry + '</div>';
+    b.onclick = ev => { ev.stopPropagation(); pickClub(c.id); };
+    g.appendChild(b);
+  }
+  $("popFoot").style.display = mode === "select" ? "grid" : "none";
+  const chip = $("clubChip").getBoundingClientRect();
+  const play = $("play").getBoundingClientRect();
+  $("clubPop").style.top = (chip.top - play.top) + "px";
+  $("clubPop").classList.add("on");
+}
+function closePop() { $("clubPop").classList.remove("on"); pickMode = "select"; }
+function pickClub(id) {
+  if (pickMode === "missed") {
+    appendShot(id, false, true);
+    toast(clubName(id).toUpperCase() + " ADDED · NO POSITION");
+  } else if (pickMode === "edit") {
+    const last = [...round.shots].reverse().find(x => x.club !== "PUTT");
+    if (last) { last.club = id; saveCur(); toast("LAST SHOT → " + clubName(id).toUpperCase()); }
+  } else {
+    selClub = id;
+  }
+  closePop();
+  render();
+}
+$("clubChip").onclick = () => openPop("select");
+$("btnMissed").onclick = e => { e.stopPropagation(); openPop("missed"); };
+$("btnEditClub").onclick = e => { e.stopPropagation(); openPop("edit"); };
+
+// ---------- scorecard screen ----------
+function cellClass(score, par) {
+  const d = score - par;
+  if (d < 0) return "cell birdie";
+  if (d === 1) return "cell bogey";
+  if (d >= 2) return "cell dbl";
+  return "cell";
+}
+function nineBlock(r, nums, lbl) {
+  let hs = '<div class="ng-lbl">HOLE</div>', ps = '<div class="ng-lbl">PAR</div>', ys = '<div class="ng-lbl">YOU</div>';
+  let parT = 0, scrT = 0;
+  for (const n of nums) {
+    const hole = COURSE.holes.find(x => x.num === n);
+    const sc = shotsOf(r, n).length;
+    parT += hole.par;
+    if (sc) scrT += sc;
+    hs += '<div class="ng-h">' + n + '</div>';
+    ps += '<div class="ng-p">' + hole.par + '</div>';
+    ys += '<div class="ng-s">' + (sc ? '<div class="' + cellClass(sc, hole.par) + '">' + sc + '</div>' : '<div class="cell" style="color:#4a5240;">·</div>') + '</div>';
+  }
+  hs += '<div class="ng-h tot">' + lbl + '</div>';
+  ps += '<div class="ng-p tot">' + parT + '</div>';
+  ys += '<div class="ng-s"><div class="cell">' + (scrT || "") + '</div></div>';
+  return '<div class="nineBlk"><div class="blkLbl">' + lbl + '</div><div class="nineGrid">' + hs + ps + ys + '</div></div>';
+}
+function openCard(r, final) {
+  viewRound = r; cardFinal = final;
+  const d = new Date(r.startTs);
+  $("cardDate").textContent = "WERRIBEE PARK · " + d.getDate() + " " + ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getMonth()];
+  $("cardBody").innerHTML = nineBlock(r, [1,2,3,4,5,6,7,8,9], "OUT") + nineBlock(r, [10,11,12,13,14,15,16,17,18], "IN");
+  const t = totals(r);
+  $("totGross").textContent = t.gross || "–";
+  $("totPar").textContent = 72;
+  const el = $("totDiff");
+  el.textContent = t.playedHoles ? toParStr(t.diff) : "–";
+  el.style.color = t.diff > 0 ? "#ffcf6b" : "#7ed957";
+  $("cardBack").textContent = final ? "‹ Home" : "‹ Map";
+  $("btnExportRound").style.display = final ? "block" : "none";
+  $("btnEndEarly").style.display = (!final && round) ? "block" : "none";
+  show("cardScr");
+}
+$("cardBack").onclick = () => { if (cardFinal || !round) { renderHome(); show("home"); } else show("play"); };
+$("cardShare").onclick = () => { if (viewRound) exportText(JSON.stringify(viewRound), "Round " + new Date(viewRound.startTs).toISOString().slice(0,10)); };
+$("btnExportRound").onclick = () => { if (viewRound) exportText(JSON.stringify(viewRound), "Round " + new Date(viewRound.startTs).toISOString().slice(0,10)); };
+$("btnEndEarly").onclick = endEarly;
+$("strip").onclick = () => { if (round) openCard(round, false); };
+
+// ---------- UI ----------
+function show(id) {
+  document.querySelectorAll(".screen").forEach(sc => sc.classList.remove("on"));
+  $(id).classList.add("on");
+}
+function toast(msg) {
+  $("toast").innerHTML = "<div>" + esc(msg) + "</div>";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").innerHTML = ""; }, 5000);
+}
+
+function gpsText() {
+  const age = lastFix ? Date.now() - lastFix.fixTs : Infinity;
+  if (!lastFix || age > FIX_DEAD_MS) return { t: lastRawAcc ? "▲ GPS ±" + Math.round(lastRawAcc) + "m ✕" : "▲ NO GPS", c: "gps-bad" };
+  const acc = "▲ GPS ±" + lastFix.accuracy.toFixed(0) + "m";
+  if (age > FIX_FRESH_MS) return { t: acc + " · " + Math.round(age/1000) + "s", c: "gps-warn" };
+  return { t: acc, c: "gps-ok" };
+}
+
+function render() {
+  const g = gpsText();
+  $("homeGps").textContent = g.t;
+  if (!round) return;
+  if (!$("play").classList.contains("on")) return;
+
+  $("gpsBadge").textContent = g.t;
+  $("gpsBadge").className = g.c;
+
+  const hole = curHole();
+  $("stripHole").textContent = "Hole " + round.hole;
+  const teePt = Object.values(hole.tees)[0];
+  const len = teePt && hole.green ? Math.round(hav(teePt[0], teePt[1], hole.green.centre[0], hole.green.centre[1])) : null;
+  $("stripPar").textContent = "PAR " + hole.par + (len ? " · " + len + " M" : "");
+  const t = totals(round);
+  $("stripTot").textContent = t.playedHoles ? toParStr(t.diff) : "E";
+  $("stripTot").style.color = t.diff > 0 ? "#ffcf6b" : "#7ed957";
+
+  const nineStart = round.hole <= 9 ? 1 : 10;
+  let mini = "";
+  for (let n = nineStart; n < nineStart + 9; n++) {
+    const sc = holeShots(n).length;
+    mini += '<div class="mn' + (n === round.hole ? " cur" : "") + '"><div class="mh">' + n + '</div><div class="ms">' + (sc || "") + '</div></div>';
+  }
+  $("miniNine").innerHTML = mini;
+
+  const c = CLUBS.find(x => x.id === selClub);
+  $("chipName").textContent = c ? c.name : "—";
+  $("chipCarry").textContent = c ? "carry ≈ " + c.carry + " m" : "tap to select";
+  const stripRect = $("strip").getBoundingClientRect();
+  $("clubChip").style.top = (stripRect.bottom + 10) + "px";
+
+  const me = fixFresh() ? lastFix : null;
+  if (me && hole.green) {
+    const dC = Math.round(hav(me.lat, me.lon, hole.green.centre[0], hole.green.centre[1]));
+    const dF = Math.round(hav(me.lat, me.lon, hole.green.front[0], hole.green.front[1]));
+    const dB = Math.round(hav(me.lat, me.lon, hole.green.back[0], hole.green.back[1]));
+    $("hero").innerHTML = dC + "<span> m</span>";
+    $("heroSub").textContent = "TO CENTER · F " + dF + " / B " + dB;
+  } else {
+    $("hero").innerHTML = "–<span> m</span>";
+    $("heroSub").textContent = "TO CENTER · NO GPS FIX";
+  }
+
+  const p = putts(round.hole).length;
+  $("btnPutt").textContent = "＋ Putt" + (p ? " " + p : "");
+  $("btnNext").textContent = round.hole >= 18 ? "Finish ⚑" : "Next ▶";
+
+  drawMap();
+}
+setInterval(() => { if (document.visibilityState === "visible") render(); }, 2000);
+window.addEventListener("resize", () => { if (round) render(); });
+
+function renderHome() {
+  const rounds = loadRounds();
+  $("pastRounds").textContent = rounds.length + " past round" + (rounds.length === 1 ? "" : "s");
+  const cur = loadCur();
+  $("resumeBanner").style.display = cur ? "flex" : "none";
+  if (cur) $("resumeInfo").textContent = "Werribee Park · Hole " + cur.hole;
+}
+
+// ---------- wire up ----------
+$("btnStart").onclick = () => {
+  if (loadCur() && !confirm("A round is in progress. Start a new one and discard it?")) return;
+  localStorage.removeItem(LS_CUR);
+  startRound();
+};
+$("btnResume").onclick = resumeRound;
+$("btnHit").onclick = hit;
+$("btnPutt").onclick = addPutt;
+$("btnUndo").onclick = undo;
+$("btnNext").onclick = nextHole;
+$("btnExportAll").onclick = () => {
+  const rounds = loadRounds();
+  if (!rounds.length) { alert("No rounds yet"); return; }
+  exportText(JSON.stringify(rounds), rounds.length + " rounds");
+};
+$("pastRounds").onclick = () => {
+  const rounds = loadRounds();
+  if (rounds.length) openCard(rounds[rounds.length - 1], true);
+};
+
+renderHome();
+if (loadCur()) resumeRound();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
