@@ -26,6 +26,8 @@ if (!html.includes('/*__FONTS__*/') || !html.includes('/*__COURSE_DATA__*/')) {
 }
 html = html.replace('/*__FONTS__*/', faces.join('\n'));
 html = html.replace('/*__COURSE_DATA__*/', course);
+const elevPath = path.join(B, 'elev_data.js');
+html = html.replace('/*__ELEV__*/', fs.existsSync(elevPath) ? fs.readFileSync(elevPath, 'utf8') : '');
 fs.writeFileSync(path.join(REPO, 'index.html'), html);
 console.log('index.html built:', (fs.statSync(path.join(REPO, 'index.html')).size / 1024).toFixed(0), 'KB');
 

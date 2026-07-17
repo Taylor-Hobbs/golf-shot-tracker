@@ -97,6 +97,42 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #toast { position:absolute; left:0; right:0; bottom:calc(190px + env(safe-area-inset-bottom)); text-align:center; pointer-events:none; }
 #toast div { display:inline-block; background:rgba(11,18,6,.85); border:1px solid rgba(255,255,255,.18); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; padding:5px 12px; border-radius:12px; }
 
+/* plays-like */
+#plBanner { display:none; position:absolute; top:0; left:0; right:0; z-index:6; background:#ffcf6b; color:#0b1206; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; font-weight:700; letter-spacing:1px; text-align:center; padding:calc(env(safe-area-inset-top) + 3px) 0 4px; }
+#plBanner.on { display:block; }
+#plays { display:none; margin-top:5px; align-items:baseline; gap:8px; }
+#plays.on { display:flex; }
+#playsNum { font-size:20px; font-weight:700; color:#c9ccc2; }
+#playsParts { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#9aa08f; letter-spacing:.5px; }
+#playsParts .stale { color:rgba(154,160,143,.4); }
+
+/* settings sheet */
+#setSheet { display:none; position:fixed; inset:0; background:rgba(9,15,7,.96); z-index:30; flex-direction:column; padding:calc(env(safe-area-inset-top) + 18px) 20px calc(18px + env(safe-area-inset-bottom)); gap:13px; overflow-y:auto; }
+#setSheet.on { display:flex; }
+#setSheet h3 { font-size:20px; font-weight:700; }
+.setRow { display:flex; align-items:center; justify-content:space-between; }
+.setLbl { font-size:15px; font-weight:600; }
+.setSub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; color:#8b917f; letter-spacing:.5px; margin-top:2px; }
+.tgl { min-width:64px; padding:9px 0; border-radius:11px; background:rgba(255,255,255,.09); font-weight:700; font-size:13px; color:#9aa08f; }
+.tgl.on { background:#7ed957; color:#0b1206; }
+.seg { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.seg button { padding:10px 0; border-radius:11px; background:rgba(255,255,255,.06); font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1px; color:#9aa08f; }
+.seg button.on { background:#7ed957; color:#0b1206; font-weight:700; }
+#windManual, #windApi { display:none; flex-direction:column; gap:12px; background:#161d0e; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px; }
+#windManual.on, #windApi.on { display:flex; }
+.stepRow { display:flex; align-items:center; justify-content:space-between; }
+.stepRow .stepBtns { display:flex; align-items:center; gap:12px; }
+.stepRow button { width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.09); font-size:20px; font-weight:700; }
+.stepVal { font-size:20px; font-weight:700; min-width:84px; text-align:center; font-variant-numeric:tabular-nums; }
+#dialWrap { display:flex; justify-content:center; }
+#alphaRow input { width:100%; accent-color:#7ed957; }
+.alphaLbls { display:flex; justify-content:space-between; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; color:#8b917f; }
+#btnFetchWx { padding:13px 0; border-radius:12px; background:rgba(126,217,87,.15); border:1px solid rgba(126,217,87,.4); color:#7ed957; font-weight:700; font-size:14px; }
+#wxStatus { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#9aa08f; line-height:1.6; }
+#setClose { margin-top:4px; padding:14px 0; border-radius:12px; background:rgba(255,255,255,.09); font-size:15px; font-weight:600; }
+#gearBtn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.08); color:#c9ccc2; font-size:15px; }
+#btnSettingsCard { width:100%; border-radius:12px; background:rgba(255,255,255,.06); color:#9aa08f; font-weight:600; font-size:13px; padding:11px 0; }
+
 /* ============ SCORECARD ============ */
 #cardScr { background:#0f1409; }
 #cardNav { padding:6px 20px 4px; display:flex; align-items:center; justify-content:space-between; }
@@ -135,7 +171,10 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       <svg width="20" height="24" viewBox="0 0 20 24"><line x1="3" y1="2" x2="3" y2="23" stroke="#f4f4f4" stroke-width="2"/><path d="M3 2 L17 6 L3 10 Z" fill="#ff5646"/></svg>
       SHOTS
     </div>
-    <div id="homeGps">▲ GPS —</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="homeGps">▲ GPS —</div>
+      <button id="gearBtn">⚙</button>
+    </div>
   </div>
   <div id="homeScroll">
     <div id="resumeBanner">
@@ -165,6 +204,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 <!-- ============ PLAY ============ -->
 <div id="play" class="screen">
   <div id="mapWrap"></div>
+  <div id="plBanner">PLAYS-LIKE ON — NOT COMPETITION LEGAL</div>
   <div class="scrimTop"></div>
   <div class="scrimBot"></div>
   <div id="gpsBadge" class="gps-bad">▲ NO GPS</div>
@@ -207,6 +247,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       <div>
         <div id="hero" class="num">–<span> m</span></div>
         <div id="heroSub">TO CENTER</div>
+        <div id="plays" class="num"><span id="playsNum">plays –</span><span id="playsParts"></span></div>
       </div>
       <button id="btnHit"><span>＋</span>Track shot</button>
     </div>
@@ -238,7 +279,55 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div id="cardCta">
     <button id="btnExportRound">Export round</button>
     <button id="btnEndEarly">End round early</button>
+    <button id="btnSettingsCard">⚙ Settings</button>
   </div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div id="setSheet">
+  <h3>Settings</h3>
+  <div class="setRow">
+    <div>
+      <div class="setLbl">Plays-like distance</div>
+      <div class="setSub">NOT LEGAL IN COMPETITION — RULE 4.3a</div>
+    </div>
+    <button class="tgl" id="tglPL">OFF</button>
+  </div>
+  <div id="plOpts" style="display:none;flex-direction:column;gap:13px;">
+    <div>
+      <div class="setSub" style="margin-bottom:7px;">WIND SOURCE</div>
+      <div class="seg">
+        <button id="srcManual">MANUAL</button>
+        <button id="srcApi">API</button>
+        <button id="srcOff">OFF</button>
+      </div>
+    </div>
+    <div id="windManual">
+      <div id="dialWrap"></div>
+      <div class="stepRow">
+        <div><div class="setLbl">Wind</div><div class="setSub">READ OFF THE TREETOPS</div></div>
+        <div class="stepBtns"><button id="wMinus">−</button><div class="stepVal" id="wVal">0 km/h</div><button id="wPlus">＋</button></div>
+      </div>
+      <div class="stepRow">
+        <div class="setLbl">Temp</div>
+        <div class="stepBtns"><button id="tMinus">−</button><div class="stepVal" id="tVal">21°C</div><button id="tPlus">＋</button></div>
+      </div>
+    </div>
+    <div id="windApi">
+      <button id="btnFetchWx">Fetch weather now</button>
+      <div id="wxStatus">Not fetched yet. Fetch in the car park while you still have reception. Goes stale after 90 min.</div>
+    </div>
+    <div id="alphaRow">
+      <div class="setSub" style="margin-bottom:6px;">WIND AT BALL HEIGHT</div>
+      <input type="range" id="alphaSlider" min="0.14" max="0.40" step="0.02">
+      <div class="alphaLbls"><span>OPEN LINKS</span><span>TREE-LINED</span></div>
+    </div>
+    <div class="setRow">
+      <div class="setLbl">Show breakdown</div>
+      <button class="tgl" id="tglBrk">ON</button>
+    </div>
+  </div>
+  <button id="setClose">Done</button>
 </div>
 
 <script>
@@ -264,8 +353,11 @@ const CLUBS = [
 ];
 const clubName = id => { const c = CLUBS.find(c => c.id === id); return c ? c.name : id; };
 
+/*__ELEV__*/
+
 const LS_CUR = "golf_current_v1";
 const LS_ROUNDS = "golf_rounds_v1";
+const LS_SET = "golf_settings_v1";
 const ACC_LIMIT = 8;
 const FIX_FRESH_MS = 10000;
 const FIX_DEAD_MS = 45000;
@@ -296,6 +388,118 @@ function hav(aLat, aLon, bLat, bLon) {
   const r = Math.PI / 180, R = 6371000;
   const s = Math.sin((bLat-aLat)*r/2)**2 + Math.cos(aLat*r)*Math.cos(bLat*r)*Math.sin((bLon-aLon)*r/2)**2;
   return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// ---------- settings ----------
+function loadSet() {
+  const def = { playsLike: false, windSource: "manual", alpha: 0.14, showBreakdown: true,
+                manual: { fromDeg: 0, kmh: 0, tempC: 21 } };
+  try { return Object.assign(def, JSON.parse(localStorage.getItem(LS_SET)) || {}); } catch { return def; }
+}
+let SET = loadSet();
+function saveSet() { localStorage.setItem(LS_SET, JSON.stringify(SET)); }
+
+// ---------- plays-like (ADDENDUM A: display-only, never touches a shot record) ----------
+// Tour-average descent angles (degrees). Tunable starting values — refit from
+// logged landing dispersion vs elevation delta once ~8-12 rounds exist.
+const DESCENT = { DR:38, "3W":40, "5W":41, "4H":43, "5i":45, "6i":46, "7i":47,
+                  "8i":49, "9i":50, PW:52, GW:53, SW:55, LW:57, CHIP:45 };
+// headwind mph (negative = tailwind) -> % ADDED to playing distance.
+// Kept as a table on purpose: the evidence is a table; a fitted curve fakes precision.
+const WIND_PCT = [[-30,-15],[-20,-12],[-10,-7],[0,0],[10,10],[20,22],[30,36]];
+const ALT_FT = 0; // Melbourne is sea level — no-op, kept for correctness
+
+function interp(table, x) {
+  if (x <= table[0][0]) return table[0][1];
+  if (x >= table[table.length-1][0]) return table[table.length-1][1];
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i], [x1, y1] = table[i+1];
+    if (x >= x0 && x <= x1) return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+  }
+  return 0;
+}
+const tempFactor = t => 1 + 0.015 * (21 - t) / 11.1;
+const altFactor = () => 1 - 0.012 * (ALT_FT / 1000);
+
+// elevation grid: bilinear; null outside the grid or at voids — NEVER extrapolate
+const ELEV_ARR = (typeof ELEV !== "undefined") ? (() => {
+  try {
+    const bin = atob(ELEV.data);
+    const a = new Int16Array(bin.length / 2);
+    for (let i = 0; i < a.length; i++) a[i] = ((bin.charCodeAt(2*i) | (bin.charCodeAt(2*i+1) << 8)) << 16) >> 16;
+    return a;
+  } catch { return null; }
+})() : null;
+function elevAt(lat, lon) {
+  if (!ELEV_ARR) return null;
+  const fr = (lat - ELEV.sw[0]) / ELEV.latStep, fc = (lon - ELEV.sw[1]) / ELEV.lonStep;
+  const r0 = Math.floor(fr), c0 = Math.floor(fc);
+  if (r0 < 0 || c0 < 0 || r0 >= ELEV.rows - 1 || c0 >= ELEV.cols - 1) return null;
+  const i = r0 * ELEV.cols + c0;
+  const q = [ELEV_ARR[i], ELEV_ARR[i+1], ELEV_ARR[i+ELEV.cols], ELEV_ARR[i+ELEV.cols+1]];
+  if (q.some(v => v === -32768)) return null;
+  const tr = fr - r0, tc = fc - c0;
+  return ELEV.base + (q[0]*(1-tr)*(1-tc) + q[1]*(1-tr)*tc + q[2]*tr*(1-tc) + q[3]*tr*tc) / 10;
+}
+
+function bearingDeg(a, b) {
+  const r = Math.PI / 180;
+  const y = Math.sin((b[1]-a[1])*r) * Math.cos(b[0]*r);
+  const x = Math.cos(a[0]*r)*Math.sin(b[0]*r) - Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos((b[1]-a[1])*r);
+  return (Math.atan2(y, x) / r + 360) % 360;
+}
+// windFromDeg is METEOROLOGICAL (direction wind comes FROM).
+// Wind FROM the bearing you're hitting = HEADWIND (positive head).
+function windComponents(windFromDeg, windMs, brg) {
+  const rel = (windFromDeg - brg) * Math.PI / 180;
+  return { head: windMs * Math.cos(rel), cross: windMs * Math.sin(rel) };
+}
+
+function playsLikeCalc(dist, dh, headMs, tempC, club) {
+  // dh > 0 = target BELOW the ball = plays shorter
+  const theta = (DESCENT[club] !== undefined ? DESCENT[club] : 45);
+  const corr = dh / Math.tan(theta * Math.PI / 180);
+  const geo = dist - (dh > 0 ? corr * 0.88 : corr); // 0.88: downhill damped — a fudge factor, /3 up vs /3.5 down
+  const wind = geo * (1 + interp(WIND_PCT, headMs * 2.23694) / 100);
+  // Multiplicative composition treats elevation/wind/temp as independent. They
+  // aren't (downwind lands flatter -> different descent angle), but modelling the
+  // coupling needs real ballistics and would be false precision. Leave it.
+  return wind * tempFactor(tempC) * altFactor();
+}
+
+function plActive() { return SET.playsLike && round && !round.compLegal; }
+function activeCond() {
+  if (SET.windSource === "off") return { source: "off", windMs: 0, windFromDeg: 0, tempC: SET.manual.tempC, stale: false };
+  if (SET.windSource === "manual")
+    return { source: "manual", windMs: SET.manual.kmh / 3.6, windFromDeg: SET.manual.fromDeg, tempC: SET.manual.tempC, stale: false };
+  const c = round && round.conditions;
+  if (!c || c.source !== "api") return null;
+  return Object.assign({}, c, { stale: Date.now() - c.fetchedAt > 90 * 60 * 1000 });
+}
+function snapshotConditions() {
+  // round-level raw observation — permitted by A1; shot records never touched
+  if (!round) return;
+  if (SET.windSource === "manual") {
+    round.conditions = { source: "manual", fetchedAt: Date.now(), windFromDeg: SET.manual.fromDeg,
+                         windMs: SET.manual.kmh / 3.6, tempC: SET.manual.tempC, stale: false };
+  } else if (SET.windSource === "off") {
+    round.conditions = { source: "off", fetchedAt: Date.now() };
+  }
+  saveCur();
+}
+async function fetchWeather() {
+  if (!round) return;
+  const ref = lastFix ? [lastFix.lat, lastFix.lon] : COURSE.holes[0].green.centre;
+  try {
+    const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + ref[0] + "&longitude=" + ref[1] +
+      "&current=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=ms");
+    const j = await res.json();
+    round.conditions = { source: "api", fetchedAt: Date.now(), windFromDeg: j.current.wind_direction_10m,
+                         windMs: j.current.wind_speed_10m, tempC: j.current.temperature_2m, stale: false };
+    saveCur();
+    toast("WX: " + Math.round(j.current.wind_speed_10m * 3.6) + " km/h FROM " + Math.round(j.current.wind_direction_10m) + "° · " + Math.round(j.current.temperature_2m) + "°C");
+    renderSettings(); render();
+  } catch { toast("WEATHER FETCH FAILED — NO RECEPTION?"); }
 }
 
 // ---------- GPS ----------
@@ -352,7 +556,14 @@ function totals(r) {
 
 function startRound() {
   round = { id: Date.now(), course: COURSE.name, startTs: Date.now(), hole: 1, shots: [] };
+  if (SET.playsLike) {
+    // Rule 4.3a: measuring elevation is not allowed in competition
+    if (confirm("Competition round?\n\nOK = YES — plays-like is disabled for this round (Rule 4.3a).\nCancel = casual round.")) round.compLegal = true;
+  }
+  round.playsLikeUsed = SET.playsLike && !round.compLegal;
   saveCur();
+  snapshotConditions();
+  if (SET.windSource === "api" && SET.playsLike) fetchWeather();
   enterPlay();
 }
 function resumeRound() {
@@ -899,10 +1110,13 @@ function render() {
     const dB = Math.round(hav(origin[0], origin[1], hole.green.back[0], hole.green.back[1]));
     $("hero").innerHTML = dC + "<span> m</span>";
     $("heroSub").textContent = (me ? "TO CENTER" : "FROM TEE · NO GPS") + " · F " + dF + " / B " + dB;
+    renderPlays(origin, hole, dC);
   } else {
     $("hero").innerHTML = "–<span> m</span>";
     $("heroSub").textContent = "TO CENTER · NO GPS FIX";
+    $("plays").classList.remove("on");
   }
+  $("plBanner").classList.toggle("on", plActive());
 
   const p = putts(round.hole).length;
   $("btnPutt").textContent = "＋ Putt" + (p ? " " + p : "");
@@ -912,6 +1126,101 @@ function render() {
 }
 setInterval(() => { if (document.visibilityState === "visible") render(); }, 2000);
 window.addEventListener("resize", () => { if (round) render(); });
+
+// plays-like display: raw number stays dominant — this is an opinion, not truth
+function renderPlays(origin, hole, dC) {
+  const el = $("plays");
+  if (!plActive()) { el.classList.remove("on"); return; }
+  const cond = activeCond();
+  const e1 = elevAt(origin[0], origin[1]), e2 = elevAt(hole.green.centre[0], hole.green.centre[1]);
+  const dh = (e1 != null && e2 != null) ? e1 - e2 : null;
+  const brg = bearingDeg(origin, hole.green.centre);
+  let headMs = 0, windPart = "";
+  if (cond && cond.source !== "off" && cond.windMs > 0) {
+    const vBall = cond.windMs * Math.pow(25 / 10, SET.alpha); // wind gradient: ball flies at ~25m, API reports 10m
+    headMs = windComponents(cond.windFromDeg, vBall, brg).head;
+    const kmh = Math.round(Math.abs(headMs) * 3.6);
+    windPart = '<span' + (cond.stale ? ' class="stale"' : '') + '>' + (headMs >= 0 ? "HEAD " : "TAIL ") + kmh + "km/h" + (cond.stale ? " STALE" : "") + "</span>";
+  }
+  const tempC = cond ? cond.tempC : 21;
+  const pl = Math.round(playsLikeCalc(dC, dh == null ? 0 : dh, headMs, tempC, selClub));
+  $("playsNum").textContent = "plays " + pl;
+  if (SET.showBreakdown) {
+    const parts = [];
+    parts.push(dh == null ? "NO ELEV" : (dh > 0 ? "↓" : "↑") + Math.abs(dh).toFixed(0) + "m");
+    if (windPart) parts.push(windPart);
+    if (Math.abs(tempC - 21) >= 4) parts.push(Math.round(tempC) + "°C");
+    $("playsParts").innerHTML = parts.join(" · ");
+  } else $("playsParts").innerHTML = "";
+  el.classList.add("on");
+}
+
+// ---------- settings sheet ----------
+function drawDial() {
+  const d = SET.manual.fromDeg, r = Math.PI / 180;
+  const cx = 70, cy = 70, R = 56;
+  const ax = cx + Math.sin(d * r) * R, ay = cy - Math.cos(d * r) * R;
+  $("dialWrap").innerHTML =
+    '<svg id="dialSvg" width="140" height="140" viewBox="0 0 140 140">' +
+    '<circle cx="70" cy="70" r="62" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.14)"/>' +
+    ['N','E','S','W'].map((t, i) => '<text x="' + (70 + Math.sin(i*90*r)*50) + '" y="' + (70 - Math.cos(i*90*r)*50 - (-4)) +
+      '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#8b917f">' + t + '</text>').join('') +
+    '<line x1="' + ax + '" y1="' + ay + '" x2="70" y2="70" stroke="#7ed957" stroke-width="3" stroke-linecap="round"/>' +
+    '<circle cx="' + ax + '" cy="' + ay + '" r="6" fill="#7ed957"/>' +
+    '<text x="70" y="76" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#fff">FROM ' + Math.round(d) + '°</text>' +
+    '</svg>';
+  $("dialWrap").onpointerdown = ev => {
+    const rect = $("dialWrap").getBoundingClientRect();
+    const x = ev.clientX - rect.left - rect.width / 2, y = ev.clientY - rect.top - 70;
+    SET.manual.fromDeg = Math.round(((Math.atan2(x, -y) / r) + 360) % 360 / 5) * 5;
+    saveSet(); snapshotConditions(); drawDial(); render();
+  };
+}
+function renderSettings() {
+  $("tglPL").textContent = SET.playsLike ? "ON" : "OFF";
+  $("tglPL").classList.toggle("on", SET.playsLike);
+  $("plOpts").style.display = SET.playsLike ? "flex" : "none";
+  for (const [id, v] of [["srcManual","manual"],["srcApi","api"],["srcOff","off"]])
+    $(id).classList.toggle("on", SET.windSource === v);
+  $("windManual").classList.toggle("on", SET.windSource === "manual");
+  $("windApi").classList.toggle("on", SET.windSource === "api");
+  $("wVal").textContent = SET.manual.kmh + " km/h";
+  $("tVal").textContent = SET.manual.tempC + "°C";
+  $("alphaSlider").value = SET.alpha;
+  $("tglBrk").textContent = SET.showBreakdown ? "ON" : "OFF";
+  $("tglBrk").classList.toggle("on", SET.showBreakdown);
+  if (SET.windSource === "manual") drawDial();
+  const c = round && round.conditions;
+  if (c && c.source === "api") {
+    const age = Math.round((Date.now() - c.fetchedAt) / 60000);
+    $("wxStatus").textContent = Math.round(c.windMs * 3.6) + " km/h FROM " + Math.round(c.windFromDeg) + "° · " +
+      Math.round(c.tempC) + "°C · fetched " + age + " min ago" + (age > 90 ? " — STALE" : "");
+  }
+}
+function openSettings() { renderSettings(); $("setSheet").classList.add("on"); }
+$("gearBtn").onclick = openSettings;
+$("btnSettingsCard").onclick = openSettings;
+$("plBanner").onclick = openSettings;
+$("plays").onclick = openSettings;
+$("setClose").onclick = () => { $("setSheet").classList.remove("on"); render(); };
+$("tglPL").onclick = () => {
+  SET.playsLike = !SET.playsLike;
+  saveSet();
+  if (round) {
+    if (SET.playsLike && round.compLegal) alert("Competition round — plays-like stays off until the round ends.");
+    if (SET.playsLike && !round.compLegal) { round.playsLikeUsed = true; saveCur(); snapshotConditions(); }
+  }
+  renderSettings(); render();
+};
+$("tglBrk").onclick = () => { SET.showBreakdown = !SET.showBreakdown; saveSet(); renderSettings(); render(); };
+for (const [id, v] of [["srcManual","manual"],["srcApi","api"],["srcOff","off"]])
+  $(id).onclick = () => { SET.windSource = v; saveSet(); snapshotConditions(); renderSettings(); render(); };
+$("wMinus").onclick = () => { SET.manual.kmh = Math.max(0, SET.manual.kmh - 2); saveSet(); snapshotConditions(); renderSettings(); render(); };
+$("wPlus").onclick = () => { SET.manual.kmh = Math.min(60, SET.manual.kmh + 2); saveSet(); snapshotConditions(); renderSettings(); render(); };
+$("tMinus").onclick = () => { SET.manual.tempC -= 1; saveSet(); snapshotConditions(); renderSettings(); render(); };
+$("tPlus").onclick = () => { SET.manual.tempC += 1; saveSet(); snapshotConditions(); renderSettings(); render(); };
+$("alphaSlider").oninput = e => { SET.alpha = parseFloat(e.target.value); saveSet(); render(); };
+$("btnFetchWx").onclick = fetchWeather;
 
 function renderHome() {
   const rounds = loadRounds();
