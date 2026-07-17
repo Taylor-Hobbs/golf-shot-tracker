@@ -28,3 +28,11 @@ html = html.replace('/*__FONTS__*/', faces.join('\n'));
 html = html.replace('/*__COURSE_DATA__*/', course);
 fs.writeFileSync(path.join(REPO, 'index.html'), html);
 console.log('index.html built:', (fs.statSync(path.join(REPO, 'index.html')).size / 1024).toFixed(0), 'KB');
+
+// sw.js from template + tile manifest
+const tiles = JSON.parse(fs.readFileSync(path.join(B, 'tiles_manifest.json'), 'utf8'));
+let sw = fs.readFileSync(path.join(REPO, 'sw.template.js'), 'utf8');
+if (!sw.includes('/*__TILES__*/')) { console.error('sw placeholder missing'); process.exit(1); }
+sw = sw.replace('/*__TILES__*/', tiles.map(t => `'./${t}'`).join(','));
+fs.writeFileSync(path.join(REPO, 'sw.js'), sw);
+console.log('sw.js built with', tiles.length, 'tiles precached');

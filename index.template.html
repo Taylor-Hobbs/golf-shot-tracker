@@ -43,8 +43,11 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 
 /* ============ PLAY ============ */
 #play { position:relative; background:#2c3d21; }
-#mapWrap { position:absolute; inset:0; }
+#mapWrap { position:absolute; inset:0; touch-action:none; }
 #mapWrap svg { display:block; width:100%; height:100%; }
+#recenter { position:absolute; right:16px; bottom:calc(220px + env(safe-area-inset-bottom)); width:42px; height:42px; border-radius:50%; background:rgba(9,15,7,.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.14); color:#fff; font-size:19px; display:none; align-items:center; justify-content:center; }
+#recenter.on { display:flex; }
+#attrib { position:absolute; left:16px; bottom:calc(200px + env(safe-area-inset-bottom)); font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:rgba(255,255,255,.45); pointer-events:none; }
 .scrimTop { position:absolute; top:0; left:0; right:0; height:210px; background:linear-gradient(#000000aa,transparent); pointer-events:none; }
 .scrimBot { position:absolute; bottom:0; left:0; right:0; height:230px; background:linear-gradient(transparent,#0b1206e0); pointer-events:none; }
 #gpsBadge { position:absolute; top:calc(env(safe-area-inset-top) + 10px); right:16px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1px; font-weight:600; }
@@ -196,6 +199,8 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   </div>
 
   <div id="toast"></div>
+  <button id="recenter">⌖</button>
+  <div id="attrib">Imagery © Vicmap, State of Victoria · CC BY 4.0</div>
 
   <div id="sheet">
     <div id="sheetTop">
@@ -398,6 +403,7 @@ function nextHole() {
   if (round.hole >= 18) { finishRound(); return; }
   round.hole++;
   target = null;
+  resetView();
   saveCur(); render();
 }
 function finishRound() {
@@ -437,12 +443,43 @@ async function exportText(text, label) {
 
 // ---------- map (SVG) ----------
 function esc(s) { return String(s); }
+
+// Web Mercator, in ground metres around the green centre — exact for the
+// satellite tiles, indistinguishable from haversine at hole scale.
+const MERC_R = 6378137;
+const mercX = lon => MERC_R * lon * Math.PI / 180;
+const mercY = lat => MERC_R * Math.asinh(Math.tan(lat * Math.PI / 180));
+const invLat = Y => Math.atan(Math.sinh(Y / MERC_R)) * 180 / Math.PI;
+const invLon = X => X / MERC_R * 180 / Math.PI;
+
+const TILE_Z = 19, TILE_N = 2 ** TILE_Z, TILE_PAD = 0.0008;
+function tileOf(lat, lon) {
+  const x = Math.floor((lon + 180) / 360 * TILE_N);
+  const rad = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * TILE_N);
+  return [x, y];
+}
+function tileCorner(x, y) { // NW corner lat/lon of tile
+  return [invLat(MERC_R * Math.PI * (1 - 2 * y / TILE_N)), x / TILE_N * 360 - 180];
+}
+function tilesFor(hole) {
+  let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+  const eat = p => { minLat = Math.min(minLat, p[0]); maxLat = Math.max(maxLat, p[0]); minLon = Math.min(minLon, p[1]); maxLon = Math.max(maxLon, p[1]); };
+  hole.green.poly.forEach(eat);
+  Object.values(hole.tees).forEach(eat);
+  hole.features.forEach(f => f.poly.forEach(eat));
+  const [x0, y0] = tileOf(maxLat + TILE_PAD, minLon - TILE_PAD);
+  const [x1, y1] = tileOf(minLat - TILE_PAD, maxLon + TILE_PAD);
+  const out = [];
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push([x, y]);
+  return out;
+}
+
 function buildFit(hole, w, h, top, bottom) {
   const ref = hole.green.centre;
-  const toM = p => [
-    (p[1] - ref[1]) * Math.cos(ref[0] * Math.PI / 180) * 111320,
-    (p[0] - ref[0]) * 110540
-  ];
+  const k = Math.cos(ref[0] * Math.PI / 180);
+  const X0 = mercX(ref[1]), Y0 = mercY(ref[0]);
+  const toM = p => [(mercX(p[1]) - X0) * k, (mercY(p[0]) - Y0) * k];
   const teePt = Object.values(hole.tees)[0] || hole.green.centre;
   const [vE, vN] = toM(teePt).map(x => -x);
   const A = Math.atan2(vE, vN);
@@ -465,7 +502,7 @@ function buildFit(hole, w, h, top, bottom) {
       const x = (px - ox) / scale + minX;
       const y = (top + bh - (oy - top) - py) / scale + minY;
       const E = cosA*x + sinA*y, N = -sinA*x + cosA*y;
-      return [ref[0] + N / 110540, ref[1] + E / (111320 * Math.cos(ref[0] * Math.PI / 180))];
+      return [invLat(Y0 + N / k), invLon(X0 + E / k)];
     }
   };
 }
@@ -497,13 +534,24 @@ function drawMap() {
     return '<path d="' + d + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="' + (sw||1) + '"' : '') + '/>';
   };
   let s = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
-  s += '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="#2f4023"/>';
-  s += '<ellipse cx="' + (w*0.3) + '" cy="' + (h*0.3) + '" rx="' + (w*0.38) + '" ry="' + (h*0.28) + '" fill="#33471f" opacity=".55"/>';
-  s += '<ellipse cx="' + (w*0.77) + '" cy="' + (h*0.7) + '" rx="' + (w*0.38) + '" ry="' + (h*0.25) + '" fill="#33471f" opacity=".5"/>';
+  s += '<rect x="-' + w + '" y="-' + h + '" width="' + (w*3) + '" height="' + (h*3) + '" fill="#20301a"/>';
+  s += '<g id="viewG" transform="' + viewTransform() + '">';
+  // vector fills stay underneath as the no-tiles fallback
   for (const f of hole.features) if (f.type === "fairway") s += path(f.poly, "#5b8a39", "#4c7530", 1);
   for (const f of hole.features) if (f.type === "water") s += path(f.poly, "#3c6478", "#4d7890", 1);
   for (const f of hole.features) if (f.type === "bunker") s += path(f.poly, "#e6d7a4", "#cdba7f", 1);
   s += path(hole.green.poly, "#8fce54", "#a7e06a", 1.5);
+  // satellite layer: each tile is an exact affine placement (mercator -> screen)
+  for (const [txl, tyl] of tilesFor(hole)) {
+    const nw = T(tileCorner(txl, tyl));
+    const ne = T(tileCorner(txl + 1, tyl));
+    const sw2 = T(tileCorner(txl, tyl + 1));
+    const a = (ne[0]-nw[0])/256, b = (ne[1]-nw[1])/256, c2 = (sw2[0]-nw[0])/256, d2 = (sw2[1]-nw[1])/256;
+    s += '<image href="tiles/' + TILE_Z + '/' + txl + '_' + tyl + '.jpg" width="256.8" height="256.8" transform="matrix(' +
+      a.toFixed(6) + ' ' + b.toFixed(6) + ' ' + c2.toFixed(6) + ' ' + d2.toFixed(6) + ' ' + nw[0].toFixed(2) + ' ' + nw[1].toFixed(2) + ')"/>';
+  }
+  // green outline on top of imagery so the target reads instantly
+  s += path(hole.green.poly, "rgba(126,217,87,.10)", "#7ed957", 2);
 
   // tee box
   const tee0 = Object.values(hole.tees)[0];
@@ -563,19 +611,83 @@ function drawMap() {
   }
   if (tee0) { const [tx, ty] = T(tee0); labels += pill(tx, ty + 18, "TEE", { fs:9, fw:700 }); }
 
-  s += labels + "</svg>";
+  s += labels + "</g></svg>";
   wrap.innerHTML = s;
 }
 
-$("mapWrap").addEventListener("click", e => {
-  if (!mapFit || !round) return;
-  if ($("clubPop").classList.contains("on")) { closePop(); return; }
-  const rect = $("mapWrap").getBoundingClientRect();
-  const ll = mapFit.toLL(e.clientX - rect.left, e.clientY - rect.top);
-  if (target && hav(target[0], target[1], ll[0], ll[1]) < 12) target = null;
-  else target = ll;
-  render();
+// ---------- pan / pinch / tap ----------
+let view = { x: 0, y: 0, s: 1 };
+let gesturing = false;
+function viewTransform() { return "translate(" + view.x + " " + view.y + ") scale(" + view.s + ")"; }
+function applyView() {
+  const g = document.getElementById("viewG");
+  if (g) g.setAttribute("transform", viewTransform());
+  $("recenter").classList.toggle("on", view.s !== 1 || view.x !== 0 || view.y !== 0);
+}
+function resetView() { view = { x: 0, y: 0, s: 1 }; }
+
+const ptrs = new Map();
+let tapStart = null, pinchD0 = 0, pinchS0 = 1;
+const wrapEl = $("mapWrap");
+wrapEl.addEventListener("pointerdown", e => {
+  wrapEl.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) {
+    tapStart = { x: e.clientX, y: e.clientY, t: Date.now() };
+  } else if (ptrs.size === 2) {
+    const [p1, p2] = [...ptrs.values()];
+    pinchD0 = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    pinchS0 = view.s;
+    tapStart = null;
+  }
+  gesturing = true;
 });
+wrapEl.addEventListener("pointermove", e => {
+  const p = ptrs.get(e.pointerId);
+  if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  if (ptrs.size === 1) {
+    if (tapStart && Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y) > 8) tapStart = null;
+    view.x += dx; view.y += dy;
+  } else if (ptrs.size === 2) {
+    const other = [...ptrs.entries()].find(([id]) => id !== e.pointerId)[1];
+    const dNow = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+    if (pinchD0 > 0) {
+      const midX = (e.clientX + other.x) / 2, midY = (e.clientY + other.y) / 2;
+      const sNew = Math.min(5, Math.max(1, pinchS0 * dNow / pinchD0));
+      const ratio = sNew / view.s;
+      const rect = wrapEl.getBoundingClientRect();
+      const mx = midX - rect.left, my = midY - rect.top;
+      view.x = mx - (mx - view.x) * ratio;
+      view.y = my - (my - view.y) * ratio;
+      view.s = sNew;
+    }
+    view.x += dx / 2; view.y += dy / 2;
+  }
+  p.x = e.clientX; p.y = e.clientY;
+  applyView();
+});
+function ptrEnd(e) {
+  ptrs.delete(e.pointerId);
+  if (ptrs.size > 0) return;
+  gesturing = false;
+  if (view.s <= 1.02 && Math.abs(view.x) < 6 && Math.abs(view.y) < 6) resetView();
+  // tap: short, no movement — set/clear the aim point
+  if (tapStart && Date.now() - tapStart.t < 500 && mapFit && round) {
+    if ($("clubPop").classList.contains("on")) { closePop(); tapStart = null; render(); return; }
+    const rect = wrapEl.getBoundingClientRect();
+    const px = (tapStart.x - rect.left - view.x) / view.s;
+    const py = (tapStart.y - rect.top - view.y) / view.s;
+    const ll = mapFit.toLL(px, py);
+    if (target && hav(target[0], target[1], ll[0], ll[1]) < 12 / view.s) target = null;
+    else target = ll;
+  }
+  tapStart = null;
+  render();
+}
+wrapEl.addEventListener("pointerup", ptrEnd);
+wrapEl.addEventListener("pointercancel", ptrEnd);
+$("recenter").onclick = () => { resetView(); render(); };
 
 // ---------- club popover ----------
 function openPop(mode) {
@@ -735,7 +847,7 @@ function render() {
   $("btnPutt").textContent = "＋ Putt" + (p ? " " + p : "");
   $("btnNext").textContent = round.hole >= 18 ? "Finish ⚑" : "Next ▶";
 
-  drawMap();
+  if (!gesturing) { drawMap(); applyView(); }
 }
 setInterval(() => { if (document.visibilityState === "visible") render(); }, 2000);
 window.addEventListener("resize", () => { if (round) render(); });
