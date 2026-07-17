@@ -908,9 +908,10 @@ const COURSE_TILE_BOUNDS = (() => {
   for (const h of COURSE.holes) {
     h.green.poly.forEach(eat); Object.values(h.tees).forEach(eat); h.features.forEach(f => f.poly.forEach(eat));
   }
-  const CPAD = 0.0012;
-  const [x0, y0] = tileOf(maxLat + CPAD, minLon - CPAD);
-  const [x1, y1] = tileOf(minLat - CPAD, maxLon + CPAD);
+  const PAD_M = 350;
+  const latPad = PAD_M / 110540, lonPad = PAD_M / (111320 * Math.cos(minLat * Math.PI / 180));
+  const [x0, y0] = tileOf(maxLat + latPad, minLon - lonPad);
+  const [x1, y1] = tileOf(minLat - latPad, maxLon + lonPad);
   return { x0, y0, x1, y1 };
 })();
 
@@ -1008,6 +1009,11 @@ function drawMap() {
   const sheetT = h - ($("sheet").getBoundingClientRect().height + 40 + 16);
   mapFit = buildFit(hole, w, h, stripB, h - sheetT);
   const T = mapFit.toPx;
+  // screen-space bbox of imagery coverage — pan clamp keeps the viewport inside it
+  const B2 = COURSE_TILE_BOUNDS;
+  const cs = [tileCorner(B2.x0, B2.y0), tileCorner(B2.x1 + 1, B2.y0), tileCorner(B2.x0, B2.y1 + 1), tileCorner(B2.x1 + 1, B2.y1 + 1)].map(T);
+  tileBB = { minX: Math.min(...cs.map(c => c[0])), maxX: Math.max(...cs.map(c => c[0])),
+             minY: Math.min(...cs.map(c => c[1])), maxY: Math.max(...cs.map(c => c[1])) };
   const path = (pts, fill, stroke, sw) => {
     let d = "M" + pts.map(p => T(p).map(v => v.toFixed(1)).join(" ")).join("L") + "Z";
     return '<path d="' + d + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="' + (sw||1) + '"' : '') + '/>';
@@ -1101,6 +1107,16 @@ function drawMap() {
 // ---------- pan / pinch / tap ----------
 let view = { x: 0, y: 0, s: 1 };
 let gesturing = false;
+let tileBB = null;
+function clampView() {
+  if (!tileBB) return;
+  const w = $("mapWrap").clientWidth, h = $("mapWrap").clientHeight, s = view.s;
+  // imaged region (screen coords * s + pan) must always span the viewport
+  const loX = w - tileBB.maxX * s, hiX = -tileBB.minX * s;
+  const loY = h - tileBB.maxY * s, hiY = -tileBB.minY * s;
+  view.x = loX > hiX ? (loX + hiX) / 2 : Math.min(hiX, Math.max(loX, view.x));
+  view.y = loY > hiY ? (loY + hiY) / 2 : Math.min(hiY, Math.max(loY, view.y));
+}
 function viewTransform() { return "translate(" + view.x + " " + view.y + ") scale(" + view.s + ")"; }
 function applyView() {
   const g = document.getElementById("viewG");
@@ -1148,6 +1164,7 @@ wrapEl.addEventListener("pointermove", e => {
     view.x += dx / 2; view.y += dy / 2;
   }
   p.x = e.clientX; p.y = e.clientY;
+  clampView();
   applyView();
   updateTiles();
 });
