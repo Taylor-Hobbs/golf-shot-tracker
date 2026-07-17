@@ -475,6 +475,59 @@ function tilesFor(hole) {
   return out;
 }
 
+// tile x/y bounds of the downloaded full-course rectangle — matches build/fetch pad
+const COURSE_TILE_BOUNDS = (() => {
+  let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+  const eat = p => { minLat = Math.min(minLat, p[0]); maxLat = Math.max(maxLat, p[0]); minLon = Math.min(minLon, p[1]); maxLon = Math.max(maxLon, p[1]); };
+  for (const h of COURSE.holes) {
+    h.green.poly.forEach(eat); Object.values(h.tees).forEach(eat); h.features.forEach(f => f.poly.forEach(eat));
+  }
+  const CPAD = 0.0012;
+  const [x0, y0] = tileOf(maxLat + CPAD, minLon - CPAD);
+  const [x1, y1] = tileOf(minLat - CPAD, maxLon + CPAD);
+  return { x0, y0, x1, y1 };
+})();
+
+function tileImg(txl, tyl, T) {
+  const nw = T(tileCorner(txl, tyl));
+  const ne = T(tileCorner(txl + 1, tyl));
+  const sw2 = T(tileCorner(txl, tyl + 1));
+  const a = (ne[0]-nw[0])/256, b = (ne[1]-nw[1])/256, c2 = (sw2[0]-nw[0])/256, d2 = (sw2[1]-nw[1])/256;
+  return '<image id="t' + txl + '_' + tyl + '" href="tiles/' + TILE_Z + '/' + txl + '_' + tyl + '.jpg" width="256.8" height="256.8" transform="matrix(' +
+    a.toFixed(6) + ' ' + b.toFixed(6) + ' ' + c2.toFixed(6) + ' ' + d2.toFixed(6) + ' ' + nw[0].toFixed(2) + ' ' + nw[1].toFixed(2) + ')"/>';
+}
+
+// tiles intersecting the current on-screen viewport (google-maps-style culling)
+function visibleTiles() {
+  const wrap = $("mapWrap");
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!mapFit || w < 10) return [];
+  const B = COURSE_TILE_BOUNDS;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [sx, sy] of [[0,0],[w,0],[0,h],[w,h]]) {
+    const px = (sx - view.x) / view.s, py = (sy - view.y) / view.s;
+    const ll = mapFit.toLL(px, py);
+    const [tx2, ty2] = tileOf(ll[0], ll[1]);
+    x0 = Math.min(x0, tx2); x1 = Math.max(x1, tx2);
+    y0 = Math.min(y0, ty2); y1 = Math.max(y1, ty2);
+  }
+  const out = [];
+  for (let x = Math.max(x0-1, B.x0); x <= Math.min(x1+1, B.x1); x++)
+    for (let y = Math.max(y0-1, B.y0); y <= Math.min(y1+1, B.y1); y++) out.push([x, y]);
+  return out;
+}
+
+// during pan/zoom: append newly visible tiles without a full redraw
+function updateTiles() {
+  const g = document.getElementById("tileG");
+  if (!g || !mapFit) return;
+  let add = "";
+  for (const [x, y] of visibleTiles()) {
+    if (!document.getElementById("t" + x + "_" + y)) add += tileImg(x, y, mapFit.toPx);
+  }
+  if (add) g.insertAdjacentHTML("beforeend", add);
+}
+
 function buildFit(hole, w, h, top, bottom) {
   const ref = hole.green.centre;
   const k = Math.cos(ref[0] * Math.PI / 180);
@@ -541,15 +594,16 @@ function drawMap() {
   for (const f of hole.features) if (f.type === "water") s += path(f.poly, "#3c6478", "#4d7890", 1);
   for (const f of hole.features) if (f.type === "bunker") s += path(f.poly, "#e6d7a4", "#cdba7f", 1);
   s += path(hole.green.poly, "#8fce54", "#a7e06a", 1.5);
-  // satellite layer: each tile is an exact affine placement (mercator -> screen)
-  for (const [txl, tyl] of tilesFor(hole)) {
-    const nw = T(tileCorner(txl, tyl));
-    const ne = T(tileCorner(txl + 1, tyl));
-    const sw2 = T(tileCorner(txl, tyl + 1));
-    const a = (ne[0]-nw[0])/256, b = (ne[1]-nw[1])/256, c2 = (sw2[0]-nw[0])/256, d2 = (sw2[1]-nw[1])/256;
-    s += '<image href="tiles/' + TILE_Z + '/' + txl + '_' + tyl + '.jpg" width="256.8" height="256.8" transform="matrix(' +
-      a.toFixed(6) + ' ' + b.toFixed(6) + ' ' + c2.toFixed(6) + ' ' + d2.toFixed(6) + ' ' + nw[0].toFixed(2) + ' ' + nw[1].toFixed(2) + ')"/>';
+  // satellite layer: hole tiles + whatever the current pan/zoom exposes,
+  // each an exact affine placement (mercator -> screen)
+  const tileSet = new Set(tilesFor(hole).map(t => t[0] + "_" + t[1]));
+  for (const t of visibleTiles()) tileSet.add(t[0] + "_" + t[1]);
+  s += '<g id="tileG">';
+  for (const key of tileSet) {
+    const [txl, tyl] = key.split("_").map(Number);
+    s += tileImg(txl, tyl, T);
   }
+  s += '</g>';
   // green outline on top of imagery so the target reads instantly
   s += path(hole.green.poly, "rgba(126,217,87,.10)", "#7ed957", 2);
 
@@ -572,10 +626,11 @@ function drawMap() {
     if (d > 25) labels += pill((ax+bx)/2 + 6, (ay+by)/2, clubName(g.club).toUpperCase() + " · " + Math.round(d) + " m", { fs:10.5, border:"rgba(255,255,255,.18)", color:"#fff" });
   }
 
-  // aim + fan lines from current position
+  // aim + fan lines — from live position, or from the tee box when there's no fix
   const gC = hole.green.centre, gF = hole.green.front, gB = hole.green.back;
-  if (me) {
-    const [mx, my] = T(me);
+  const origin = me || tee0 || null;
+  if (origin) {
+    const [mx, my] = T(origin);
     const aimTo = target || gC;
     const [axp, ayp] = T(aimTo);
     for (const gp of [gF, gB]) {
@@ -587,11 +642,13 @@ function drawMap() {
       const [gx, gy] = T(gC);
       s += '<line x1="' + axp + '" y1="' + ayp + '" x2="' + gx + '" y2="' + gy + '" stroke="#ffd60a" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity=".8"/>';
       s += '<circle cx="' + axp + '" cy="' + ayp + '" r="9" fill="none" stroke="#ffd60a" stroke-width="2.5"/>';
-      labels += pill((mx+axp)/2 - 10, (my+ayp)/2, Math.round(hav(me[0], me[1], target[0], target[1])) + " m", { fs:11, color:"#ffd60a", border:"rgba(255,214,10,.4)" });
-      labels += pill((axp+T(gC)[0])/2 + 10, (ayp+T(gC)[1])/2, Math.round(hav(target[0], target[1], gC[0], gC[1])) + " m", { fs:10, color:"#ffd60a" });
+      labels += pill((mx+axp)/2 - 10, (my+ayp)/2, Math.round(hav(origin[0], origin[1], target[0], target[1])) + " m", { fs:11, color:"#ffd60a", border:"rgba(255,214,10,.4)" });
+      labels += pill((axp+gx)/2 + 10, (ayp+gy)/2, Math.round(hav(target[0], target[1], gC[0], gC[1])) + " m", { fs:10, color:"#ffd60a" });
     }
-    // ball marker
-    s += '<circle cx="' + mx + '" cy="' + my + '" r="12" fill="rgba(255,255,255,.25)"/><circle cx="' + mx + '" cy="' + my + '" r="8" fill="#fff"/>';
+    if (me) {
+      // ball marker only for a real fix — the tee fallback is not a position claim
+      s += '<circle cx="' + mx + '" cy="' + my + '" r="12" fill="rgba(255,255,255,.25)"/><circle cx="' + mx + '" cy="' + my + '" r="8" fill="#fff"/>';
+    }
   }
 
   // flagstick
@@ -600,10 +657,10 @@ function drawMap() {
   s += '<path d="M' + gx + ' ' + (gy-20) + ' L' + (gx+15) + ' ' + (gy-16) + ' L' + gx + ' ' + (gy-11) + ' Z" fill="#ff5646"/>';
 
   // distance pins F/C/B
-  if (me) {
-    const dC = Math.round(hav(me[0], me[1], gC[0], gC[1]));
-    const dF = Math.round(hav(me[0], me[1], gF[0], gF[1]));
-    const dB = Math.round(hav(me[0], me[1], gB[0], gB[1]));
+  if (origin) {
+    const dC = Math.round(hav(origin[0], origin[1], gC[0], gC[1]));
+    const dF = Math.round(hav(origin[0], origin[1], gF[0], gF[1]));
+    const dB = Math.round(hav(origin[0], origin[1], gB[0], gB[1]));
     labels += pill(gx, gy - 34, dC + " ctr", { fs:13, fw:700, bg:"#0b1206", border:"#ff5646", color:"#fff" });
     const [fx, fy] = T(gF), [bx2, by2] = T(gB);
     labels += pill(fx - 34, fy + 6, "F " + dF, {});
@@ -666,6 +723,7 @@ wrapEl.addEventListener("pointermove", e => {
   }
   p.x = e.clientX; p.y = e.clientY;
   applyView();
+  updateTiles();
 });
 function ptrEnd(e) {
   ptrs.delete(e.pointerId);
@@ -693,7 +751,8 @@ $("recenter").onclick = () => { resetView(); render(); };
 function openPop(mode) {
   pickMode = mode;
   const hole = curHole();
-  const dist = (fixFresh() && hole && hole.green) ? Math.round(hav(lastFix.lat, lastFix.lon, hole.green.centre[0], hole.green.centre[1])) : null;
+  const po = fixFresh() ? [lastFix.lat, lastFix.lon] : (hole ? Object.values(hole.tees)[0] : null);
+  const dist = (po && hole && hole.green) ? Math.round(hav(po[0], po[1], hole.green.centre[0], hole.green.centre[1])) : null;
   $("popTitle").textContent =
     mode === "missed" ? "MISSED ONE — WHAT DID YOU HIT?" :
     mode === "edit" ? "EDIT LAST CLUB" :
@@ -831,13 +890,15 @@ function render() {
   const stripRect = $("strip").getBoundingClientRect();
   $("clubChip").style.top = (stripRect.bottom + 10) + "px";
 
-  const me = fixFresh() ? lastFix : null;
-  if (me && hole.green) {
-    const dC = Math.round(hav(me.lat, me.lon, hole.green.centre[0], hole.green.centre[1]));
-    const dF = Math.round(hav(me.lat, me.lon, hole.green.front[0], hole.green.front[1]));
-    const dB = Math.round(hav(me.lat, me.lon, hole.green.back[0], hole.green.back[1]));
+  const me = fixFresh() ? [lastFix.lat, lastFix.lon] : null;
+  const teePt2 = Object.values(hole.tees)[0] || null;
+  const origin = me || teePt2;
+  if (origin && hole.green) {
+    const dC = Math.round(hav(origin[0], origin[1], hole.green.centre[0], hole.green.centre[1]));
+    const dF = Math.round(hav(origin[0], origin[1], hole.green.front[0], hole.green.front[1]));
+    const dB = Math.round(hav(origin[0], origin[1], hole.green.back[0], hole.green.back[1]));
     $("hero").innerHTML = dC + "<span> m</span>";
-    $("heroSub").textContent = "TO CENTER · F " + dF + " / B " + dB;
+    $("heroSub").textContent = (me ? "TO CENTER" : "FROM TEE · NO GPS") + " · F " + dF + " / B " + dB;
   } else {
     $("hero").innerHTML = "–<span> m</span>";
     $("heroSub").textContent = "TO CENTER · NO GPS FIX";
