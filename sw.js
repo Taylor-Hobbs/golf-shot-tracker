@@ -1,5 +1,5 @@
 // Bump CACHE on every deploy or you'll run stale code on the 1st tee.
-const CACHE = 'golf-v1';
+const CACHE = 'golf-v2';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {

@@ -36,7 +36,28 @@ button:active { background:#3a3a3c; }
 #yC { font-size:26vw; font-weight:900; line-height:.9; font-variant-numeric:tabular-nums; }
 .fb { display:flex; gap:14vw; font-size:8.5vw; font-weight:700; color:#8e8e93; font-variant-numeric:tabular-nums; }
 .fb span b { color:#c7c7cc; }
-#gps { font-size:14px; font-weight:700; padding:2px 10px; border-radius:10px; margin-top:6px; }
+#viewRow { display:flex; gap:10px; align-items:center; margin-top:6px; }
+#viewRow button { font-size:13px; font-weight:800; padding:6px 14px; background:#1c1c1e; color:#8e8e93; min-height:34px; }
+#viewRow button.on { color:#fff; background:#2c2c2e; }
+#miniY { display:none; font-size:5vw; font-weight:800; color:#c7c7cc; font-variant-numeric:tabular-nums; padding:2px 0; }
+#miniY small { color:#8e8e93; font-weight:600; }
+#map { display:none; width:100%; flex:1; min-height:0; touch-action:manipulation; }
+.mapmode #yC, .mapmode .fb { display:none; }
+.mapmode #miniY { display:block; }
+.mapmode #map { display:block; }
+
+#card { display:none; position:fixed; inset:0; background:rgba(0,0,0,.96); z-index:20; flex-direction:column; padding:18px 10px calc(18px + env(safe-area-inset-bottom)); gap:10px; overflow-y:auto; }
+#card.on { display:flex; }
+#card h3 { text-align:center; font-size:20px; }
+#cardBody { display:flex; gap:8px; justify-content:center; }
+.ninetbl { border-collapse:collapse; flex:1; max-width:200px; }
+.ninetbl th, .ninetbl td { border:1px solid #2c2c2e; padding:5px 4px; text-align:center; font-size:14px; font-variant-numeric:tabular-nums; }
+.ninetbl th { color:#8e8e93; font-weight:700; font-size:12px; }
+.ninetbl .tot td { font-weight:800; background:#1c1c1e; }
+.ninetbl .cur td { background:#0a2a4a; }
+#cardSum { text-align:center; font-size:18px; font-weight:800; }
+#cardClose { height:52px; font-size:17px; flex:none; }
+#gps { font-size:14px; font-weight:700; padding:2px 10px; border-radius:10px; }
 .gps-ok { color:#30d158; background:#0e2b16; }
 .gps-warn { color:#ffd60a; background:#2b250a; }
 .gps-bad { color:#ff453a; background:#2b0e0c; }
@@ -87,10 +108,16 @@ button:active { background:#3a3a3c; }
     <button id="btnNext">NEXT &#9654;</button>
   </div>
   <div id="yards">
+    <div id="miniY"><small>F</small> <span id="mF">–</span> &nbsp;<small>C</small> <span id="mC">–</span> &nbsp;<small>B</small> <span id="mB">–</span></div>
     <div class="fb"><span>F <b id="yF">–</b></span></div>
     <div id="yC">–</div>
     <div class="fb"><span>B <b id="yB">–</b></span></div>
-    <div id="gps" class="gps-bad">NO GPS</div>
+    <canvas id="map"></canvas>
+    <div id="viewRow">
+      <button id="btnMap">MAP</button>
+      <div id="gps" class="gps-bad">NO GPS</div>
+      <button id="btnCard">CARD</button>
+    </div>
   </div>
   <div id="toast"></div>
   <div id="util">
@@ -107,6 +134,13 @@ button:active { background:#3a3a3c; }
   <div id="ovTitle"></div>
   <div id="ovGrid"></div>
   <button id="ovCancel">Cancel</button>
+</div>
+
+<div id="card">
+  <h3>Scorecard</h3>
+  <div id="cardSum"></div>
+  <div id="cardBody"></div>
+  <button id="cardClose">Close</button>
 </div>
 
 <div id="done" class="screen">
@@ -354,6 +388,160 @@ function hav(aLat, aLon, bLat, bLon) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+// ---------- hole map ----------
+// Vector overlay drawn from the OSM polygons baked into COURSE — no tiles,
+// fully offline. Rotated so the tee is at the bottom and the green at the top.
+let mapMode = false;
+let target = null; // {lat, lon} — tap-to-measure point, cleared on hole change
+let mapT = null;   // current transform, rebuilt each draw
+
+function buildTransform(hole, w, h) {
+  const ref = hole.green.centre;
+  const toM = p => [
+    (p[1] - ref[1]) * Math.cos(ref[0] * Math.PI / 180) * 111320,
+    (p[0] - ref[0]) * 110540
+  ];
+  const teePt = Object.values(hole.tees)[0] || hole.green.centre;
+  const [vE, vN] = toM(teePt).map(x => -x); // tee -> green vector
+  const A = Math.atan2(vE, vN);             // rotate so it points screen-up
+  const cosA = Math.cos(A), sinA = Math.sin(A);
+  const rot = p => { const [E, N] = toM(p); return [cosA*E - sinA*N, sinA*E + cosA*N]; };
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const eat = p => { const [x, y] = rot(p); minX = Math.min(minX,x); maxX = Math.max(maxX,x); minY = Math.min(minY,y); maxY = Math.max(maxY,y); };
+  hole.green.poly.forEach(eat);
+  Object.values(hole.tees).forEach(eat);
+  hole.features.forEach(f => f.poly.forEach(eat));
+  const pad = 20;
+  minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+  const scale = Math.min(w / (maxX - minX), h / (maxY - minY));
+  const ox = (w - (maxX - minX) * scale) / 2;
+  const oy = (h - (maxY - minY) * scale) / 2;
+
+  return {
+    toPx: p => { const [x, y] = rot(p); return [ox + (x - minX) * scale, h - oy - (y - minY) * scale]; },
+    toLL: (px, py) => {
+      const x = (px - ox) / scale + minX, y = (h - py - oy) / scale + minY;
+      const E = cosA*x + sinA*y, N = -sinA*x + cosA*y;
+      return [ref[0] + N / 110540, ref[1] + E / (111320 * Math.cos(ref[0] * Math.PI / 180))];
+    }
+  };
+}
+
+function drawMap() {
+  const cv = $("map");
+  const cur = COURSE.holes.find(x => x.num === round.hole);
+  if (!cur || !cur.green) return;
+  const rect = cv.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = rect.width * dpr; cv.height = rect.height * dpr;
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  mapT = buildTransform(cur, w, h);
+  const T = mapT.toPx;
+
+  ctx.fillStyle = "#0b140d"; ctx.fillRect(0, 0, w, h); // rough
+  const poly = (pts, fill) => {
+    ctx.beginPath();
+    pts.forEach((p, i) => { const [x, y] = T(p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+  };
+  for (const f of cur.features) if (f.type === "fairway") poly(f.poly, "#1d4024");
+  for (const f of cur.features) if (f.type === "water") poly(f.poly, "#1c4a6e");
+  for (const f of cur.features) if (f.type === "bunker") poly(f.poly, "#c2a25a");
+  poly(cur.green.poly, "#2f7d3d");
+
+  const dot = (p, r, fill, ring) => {
+    const [x, y] = T(p);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = fill; ctx.fill();
+    if (ring) { ctx.lineWidth = 2; ctx.strokeStyle = ring; ctx.stroke(); }
+    return [x, y];
+  };
+  for (const t of Object.values(cur.tees)) dot(t, 4, "#3a3a3c", "#8e8e93");
+  for (const s of swings(round.hole)) if (s.lat != null) dot([s.lat, s.lon], 4, "#fff");
+
+  const label = (x, y, txt) => {
+    ctx.font = "800 15px -apple-system,system-ui,sans-serif";
+    const tw = ctx.measureText(txt).width;
+    const bx = Math.min(Math.max(x - tw/2 - 5, 2), w - tw - 12), by = Math.max(y, 12);
+    ctx.fillStyle = "rgba(0,0,0,.75)"; ctx.fillRect(bx, by - 12, tw + 10, 20);
+    ctx.fillStyle = "#ffd60a"; ctx.fillText(txt, bx + 5, by + 3);
+  };
+  const line = (a, b) => {
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.strokeStyle = "#ffd60a"; ctx.stroke(); ctx.setLineDash([]);
+  };
+
+  const age = lastFix ? Date.now() - lastFix.fixTs : Infinity;
+  const me = (lastFix && age <= FIX_DEAD_MS) ? [lastFix.lat, lastFix.lon] : null;
+  let mePx = null;
+  if (me) {
+    const [x, y] = T(me);
+    if (x > -50 && x < w + 50 && y > -50 && y < h + 50) mePx = dot(me, 6, "#0a84ff", "#fff");
+  }
+  if (target) {
+    const tPx = T(target);
+    ctx.beginPath(); ctx.arc(tPx[0], tPx[1], 8, 0, 7);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = "#ffd60a"; ctx.stroke();
+    const gPx = T(cur.green.centre);
+    line(tPx, gPx);
+    label((tPx[0]+gPx[0])/2, (tPx[1]+gPx[1])/2, Math.round(hav(target[0], target[1], cur.green.centre[0], cur.green.centre[1])) + "m");
+    if (mePx) {
+      line(mePx, tPx);
+      label((mePx[0]+tPx[0])/2, (mePx[1]+tPx[1])/2, Math.round(hav(me[0], me[1], target[0], target[1])) + "m");
+    }
+  }
+}
+
+$("map").addEventListener("click", e => {
+  if (!mapT || !round) return;
+  const rect = $("map").getBoundingClientRect();
+  const ll = mapT.toLL(e.clientX - rect.left, e.clientY - rect.top);
+  // tap on/near the existing target clears it
+  if (target && hav(target[0], target[1], ll[0], ll[1]) < 12) target = null;
+  else target = ll;
+  render();
+});
+
+// ---------- scorecard ----------
+function cardHtml() {
+  const played = h => holeShots(h).length > 0;
+  const nine = holes => {
+    let rows = '<tr><th>H</th><th>Par</th><th>Scr</th><th>Putt</th></tr>', sp = 0, ss = 0, pp = 0;
+    for (const hn of holes) {
+      const ch = COURSE.holes.find(x => x.num === hn);
+      const sc = holeShots(hn).length, pt = putts(hn).length;
+      if (played(hn)) { sp += ch.par; ss += sc; pp += pt; }
+      rows += `<tr${hn === (round ? round.hole : 0) ? ' class="cur"' : ''}><td>${hn}</td><td>${ch.par}</td><td>${played(hn) ? sc : ''}</td><td>${played(hn) ? pt : ''}</td></tr>`;
+    }
+    rows += `<tr class="tot"><td></td><td>${holes.reduce((s,hn)=>s+COURSE.holes.find(x=>x.num===hn).par,0)}</td><td>${ss || ''}</td><td>${pp || ''}</td></tr>`;
+    return { html: '<table class="ninetbl">' + rows + '</table>', sp, ss, pp };
+  };
+  const out = nine([1,2,3,4,5,6,7,8,9]), inn = nine([10,11,12,13,14,15,16,17,18]);
+  const strokes = out.ss + inn.ss, parPlayed = out.sp + inn.sp;
+  const diff = strokes - parPlayed;
+  return {
+    body: out.html + inn.html,
+    sum: strokes ? `${strokes} strokes · ${diff === 0 ? 'E' : (diff > 0 ? '+' : '') + diff} thru played holes · ${out.pp + inn.pp} putts` : 'No shots yet'
+  };
+}
+function showCard() {
+  const c = cardHtml();
+  $("cardBody").innerHTML = c.body;
+  $("cardSum").textContent = c.sum;
+  $("card").classList.add("on");
+}
+$("btnCard").onclick = () => { if (round) showCard(); };
+$("cardClose").onclick = () => $("card").classList.remove("on");
+$("btnMap").onclick = () => {
+  mapMode = !mapMode;
+  $("play").classList.toggle("mapmode", mapMode);
+  $("btnMap").classList.toggle("on", mapMode);
+  render();
+};
+
 // ---------- GPS ----------
 function startGPS() {
   if (watchId !== null || !("geolocation" in navigator)) return;
@@ -477,6 +665,7 @@ function nextHole() {
     toast("Last: " + Math.round(hav(lastShot.lat, lastShot.lon, cur.green.centre[0], cur.green.centre[1])) + "m to centre");
   if (round.hole >= 18) { endRound(); return; }
   round.hole++;
+  target = null;
   saveCur(); render();
 }
 
@@ -564,12 +753,14 @@ function render() {
 
   if (lastFix && age <= FIX_DEAD_MS && cur.green) {
     const d = t => Math.round(hav(lastFix.lat, lastFix.lon, cur.green[t][0], cur.green[t][1]));
-    $("yF").textContent = d("front");
-    $("yC").textContent = d("centre");
-    $("yB").textContent = d("back");
+    $("yF").textContent = $("mF").textContent = d("front");
+    $("yC").textContent = $("mC").textContent = d("centre");
+    $("yB").textContent = $("mB").textContent = d("back");
   } else {
     $("yF").textContent = $("yC").textContent = $("yB").textContent = "–";
+    $("mF").textContent = $("mC").textContent = $("mB").textContent = "–";
   }
+  if (mapMode) drawMap();
 
   document.querySelectorAll("#clubs button").forEach(b =>
     b.classList.toggle("sel", b.dataset.club === selClub));
