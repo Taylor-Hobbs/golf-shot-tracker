@@ -35,42 +35,42 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #resumeBanner .rb2 { font-size:15px; font-weight:600; margin-top:3px; }
 #btnResume { border-radius:20px; background:rgba(255,255,255,.2); color:#fff; font-weight:600; font-size:15px; padding:9px 18px; }
 #quickRow { display:flex; gap:8px; margin-bottom:16px; }
-.qchip { flex:1; border-radius:14px; padding:11px 8px; text-align:center; color:#fff; }
+.qchip { flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:13px; padding:12px 6px; text-align:center; color:#fff; backdrop-filter:none; -webkit-backdrop-filter:none; }
 .qchip .qi { font-size:17px; }
-.qchip .ql { font-size:11px; font-weight:600; margin-top:4px; }
+.qchip .ql { font-size:11px; font-weight:600; margin-top:7px; }
 .sectLabel { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1.5px; color:#8e8e93; margin-bottom:10px; padding-left:2px; }
-#search { display:flex; align-items:center; gap:7px; background:rgba(120,120,128,.2); border-radius:11px; padding:9px 12px; margin-bottom:14px; color:#8e8e93; font-size:15px; }
-#courseList { border-radius:18px; overflow:hidden; }
-.courseRow { display:flex; align-items:center; gap:13px; padding:12px 14px; background:rgba(255,255,255,.09); }
-.courseRow .thumb { width:46px; height:46px; border-radius:12px; overflow:hidden; flex:none; background:#2f4023; }
-.courseRow .cname { font-size:16px; font-weight:600; }
+#search { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:9px 12px; margin-bottom:14px; color:#8b917f; font-size:14px; }
+#courseList { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:16px; overflow:hidden; backdrop-filter:none; -webkit-backdrop-filter:none; }
+.courseRow { display:flex; align-items:center; gap:12px; padding:11px 13px; background:rgba(255,255,255,.05); }
+.courseRow .thumb { width:42px; height:42px; border-radius:11px; overflow:hidden; flex:none; background:#2f4023; }
+.courseRow .cname { font-size:15px; font-weight:600; }
 .courseRow .cmeta { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10.5px; color:#9aa08f; margin-top:2px; }
 .courseRow .check { color:#fff; font-size:17px; font-weight:700; }
 #homeCta { flex:none; padding:14px 18px 10px; }
-#btnStart { width:100%; border-radius:18px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:20px; padding:18px 0; box-shadow:0 12px 24px -8px rgba(0,0,0,.45); }
+#btnStart { width:100%; border-radius:16px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:18px; padding:16px 0; }
 #tabBar { flex:none; display:flex; justify-content:space-around; padding:8px 20px calc(10px + env(safe-area-inset-bottom)); background:rgba(22,22,24,.4); backdrop-filter:blur(30px) saturate(180%); -webkit-backdrop-filter:blur(30px) saturate(180%); border-top:.5px solid rgba(255,255,255,.1); }
-.tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#8e8e93; font-size:10px; background:none; }
+.tab { display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; opacity:.5; font-size:10px; background:none; }
 .tab span { font-size:19px; }
-.tab.on { color:#fff; }
+.tab.on { opacity:1; }
 
 /* ============ PLAY ============ */
 #play { position:relative; background:#000; }
 #mapWrap { position:absolute; inset:0; touch-action:none; }
 #mapWrap svg { display:block; width:100%; height:100%; }
-#recenter { position:absolute; right:14px; bottom:calc(220px + env(safe-area-inset-bottom)); width:44px; height:44px; border-radius:22px; background:rgba(255,255,255,.1); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:.5px solid rgba(255,255,255,.2); color:#fff; font-size:20px; display:none; align-items:center; justify-content:center; }
+#recenter { position:absolute; right:12px; bottom:calc(200px + env(safe-area-inset-bottom)); width:42px; height:42px; border-radius:21px; background:rgba(22,22,24,.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:.5px solid rgba(255,255,255,.2); color:#fff; display:none; align-items:center; justify-content:center; }
 #recenter.on { display:flex; }
 #attrib { position:absolute; left:12px; bottom:calc(202px + env(safe-area-inset-bottom)); font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:rgba(255,255,255,.55); pointer-events:none; }
-.scrimTop { position:absolute; top:0; left:0; right:0; height:220px; background:linear-gradient(#000000a6,transparent); pointer-events:none; }
-.scrimBot { position:absolute; bottom:0; left:0; right:0; height:250px; background:linear-gradient(transparent,#000000ee); pointer-events:none; }
-#gpsBadge { position:absolute; top:calc(env(safe-area-inset-top) + 10px); right:16px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:1px; font-weight:600; }
+.scrimTop { position:absolute; top:0; left:0; right:0; height:150px; background:linear-gradient(#000000cc,transparent); pointer-events:none; }
+.scrimBot { position:absolute; bottom:0; left:0; right:0; height:200px; background:linear-gradient(transparent,#0b1008ee); pointer-events:none; }
+#gpsBadge { position:absolute; top:calc(env(safe-area-inset-top) + 10px); right:16px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.5px; font-weight:600; display:flex; align-items:center; gap:5px; }
 .gps-ok { color:#fff; } .gps-warn { color:#ffcf6b; } .gps-bad { color:#ff8a7a; }
 
-#strip { position:absolute; top:calc(env(safe-area-inset-top) + 34px); left:12px; right:12px; background:rgba(255,255,255,.1); backdrop-filter:blur(24px) saturate(160%); -webkit-backdrop-filter:blur(24px) saturate(160%); border:.5px solid rgba(255,255,255,.18); border-radius:20px; padding:11px 13px; }
+#strip { position:absolute; top:calc(env(safe-area-inset-top) + 34px); left:10px; right:10px; background:rgba(22,22,24,.5); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:.5px solid rgba(255,255,255,.16); border-radius:16px; padding:10px 12px; }
 #stripTop { display:flex; align-items:center; justify-content:space-between; }
 #holeNav { display:flex; align-items:center; gap:10px; }
 .chev { font-size:22px; color:#fff; opacity:.75; padding:0 4px; background:none; }
-#stripHole { font-size:23px; font-weight:700; letter-spacing:-.5px; line-height:1; }
-#stripPar { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:#fff; margin-top:4px; letter-spacing:.5px; }
+#stripHole { font-size:19px; font-weight:700; letter-spacing:-.3px; line-height:1; }
+#stripPar { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#c9ccc2; margin-top:3px; letter-spacing:.5px; }
 #stripTotLbl { font-size:10px; font-family:'JetBrains Mono',ui-monospace,monospace; color:#9aa08f; letter-spacing:1px; text-align:right; }
 #stripTot { font-size:23px; font-weight:700; line-height:1; color:#fff; text-align:right; }
 #miniNine { display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-top:10px; }
@@ -79,11 +79,10 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .mn .ms { height:20px; border-radius:6px; background:rgba(255,255,255,.1); color:#c9ccc2; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; margin-top:2px; }
 .mn.cur .ms { background:rgba(255,255,255,.28); color:#fff; font-weight:700; }
 
-#clubChip { position:absolute; right:12px; width:130px; background:rgba(255,255,255,.1); backdrop-filter:blur(24px) saturate(160%); -webkit-backdrop-filter:blur(24px) saturate(160%); border:.5px solid rgba(255,255,255,.18); border-radius:16px; padding:10px 12px; box-shadow:0 10px 24px -8px rgba(0,0,0,.5); }
-#clubChip .cl { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; letter-spacing:1.5px; color:#9aa08f; }
-#clubChip .cn { display:flex; align-items:baseline; justify-content:space-between; margin-top:3px; font-size:21px; font-weight:700; letter-spacing:-.5px; }
-#clubChip .cn span { color:#fff; font-size:12px; }
-#clubChip .cc { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#fff; margin-top:3px; }
+#clubChip { position:absolute; right:10px; width:118px; background:rgba(22,22,24,.5); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:.5px solid rgba(255,255,255,.5); border-radius:14px; padding:9px 11px; }
+#clubChip .cl { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; letter-spacing:1px; color:#c9ccc2; }
+#clubChip #chipName { font-size:20px; font-weight:700; margin-top:2px; letter-spacing:-.3px; }
+#clubChip .cc { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; color:#c9ccc2; }
 
 /* club picker: iOS bottom sheet */
 #clubPop { position:absolute; left:0; right:0; bottom:0; display:none; background:rgba(22,22,24,.45); backdrop-filter:blur(40px) saturate(180%); -webkit-backdrop-filter:blur(40px) saturate(180%); border-top-left-radius:26px; border-top-right-radius:26px; border-top:.5px solid rgba(255,255,255,.18); padding:10px 16px calc(26px + env(safe-area-inset-bottom)); z-index:5; }
@@ -102,15 +101,15 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #popFoot { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
 #popFoot button { border-radius:13px; background:rgba(255,255,255,.1); color:#fff; font-weight:600; font-size:14px; padding:13px 0; }
 
-#sheet { position:absolute; left:12px; right:12px; bottom:calc(14px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.1); backdrop-filter:blur(28px) saturate(160%); -webkit-backdrop-filter:blur(28px) saturate(160%); border:.5px solid rgba(255,255,255,.16); border-radius:24px; padding:16px 16px 15px; }
+#sheet { position:absolute; left:10px; right:10px; bottom:calc(12px + env(safe-area-inset-bottom)); background:rgba(22,22,24,.55); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:.5px solid rgba(255,255,255,.16); border-radius:20px; padding:14px; }
 #sheetTop { display:flex; align-items:flex-end; justify-content:space-between; }
-#hero { font-size:52px; font-weight:700; letter-spacing:-2px; line-height:.85; }
-#hero span { font-size:19px; color:#fff; font-weight:600; letter-spacing:0; }
-#heroSub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1.5px; color:#9aa08f; margin-top:6px; }
-#btnHit { border-radius:16px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:15px; padding:14px 18px; display:flex; align-items:center; gap:6px; box-shadow:0 8px 18px -6px rgba(0,0,0,.45); }
+#hero { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:42px; font-weight:700; letter-spacing:-2px; line-height:.85; }
+#hero span { font-size:15px; color:#c9ccc2; font-weight:600; letter-spacing:0; }
+#heroSub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; letter-spacing:1.5px; color:#8b917f; margin-top:5px; }
+#btnHit { border-radius:13px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:14px; padding:11px 14px; display:flex; align-items:center; gap:6px; }
 #btnHit span { font-size:19px; line-height:1; }
-#quick { display:grid; grid-template-columns:1.1fr 1fr .7fr 1.1fr; gap:8px; margin-top:14px; }
-#quick button { border-radius:12px; background:rgba(255,255,255,.14); color:#fff; font-weight:600; font-size:13px; padding:11px 0; }
+#quick { display:grid; grid-template-columns:1.1fr 1fr .7fr 1.1fr; gap:8px; margin-top:12px; }
+#quick button { border-radius:11px; background:rgba(255,255,255,.1); color:#fff; font-weight:600; font-size:12px; padding:10px 0; }
 #toast { position:absolute; left:0; right:0; bottom:calc(190px + env(safe-area-inset-bottom)); text-align:center; pointer-events:none; }
 #toast div { display:inline-block; background:rgba(22,22,24,.7); border:.5px solid rgba(255,255,255,.18); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; padding:5px 12px; border-radius:12px; }
 
@@ -254,6 +253,10 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .hcpCtl .hv small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; font-weight:400; letter-spacing:1px; }
 #addPlayer { border:.5px dashed rgba(255,255,255,.35); border-radius:12px; padding:11px 0; width:100%; font-size:14px; font-weight:600; margin-top:10px; }
 #setupCta { flex:none; padding:12px 18px calc(18px + env(safe-area-inset-bottom)); }
+.swt { width:44px; height:26px; border-radius:13px; background:rgba(255,255,255,.2); position:relative; flex:none; }
+.swt .knob { position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#fff; }
+.swt.on { background:rgba(255,255,255,.9); }
+.swt.on .knob { left:auto; right:2px; background:#0c0d10; }
 #btnTeeOff { width:100%; border-radius:18px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:20px; padding:18px 0; }
 
 /* ============ SCOREBOARD ============ */
@@ -299,7 +302,6 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       SHOTS
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <div id="homeGps">▲ GPS —</div>
       <button id="gearBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5 L12 5 M12 19 L12 21.5 M2.5 12 L5 12 M19 12 L21.5 12 M5.2 5.2 L7 7 M17 17 L18.8 18.8 M18.8 5.2 L17 7 M7 17 L5.2 18.8"/></svg></button>
     </div>
   </div>
@@ -311,16 +313,16 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       </div>
       <button id="btnResume">Resume</button>
     </div>
+    <div id="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><line x1="16" y1="16" x2="21" y2="21"/></svg><span>Search courses</span></div>
     <div id="quickRow">
       <button class="qchip glass" id="qBag"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 L9 15 C9 18 15 18 15 15 L15 8"/><line x1="15" y1="6" x2="15" y2="8"/><path d="M7 20 L17 20"/></svg></div><div class="ql">My Bag</div></button>
       <button class="qchip glass" id="qYd"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12" stroke-dasharray="1.5 3.5"/><path d="M16 8 L20 12 L16 16"/></svg></div><div class="ql">Yardages</div></button>
       <button class="qchip glass" id="qSg"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg></div><div class="ql">Insights</div></button>
     </div>
     <div class="sectLabel">SELECT COURSE</div>
-    <div id="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><line x1="16" y1="16" x2="21" y2="21"/></svg><span>Search courses</span></div>
     <div id="courseList" class="glass">
       <div class="courseRow">
-        <div class="thumb"><svg width="46" height="46" viewBox="0 0 52 52"><rect width="52" height="52" fill="#2f4023"/><path d="M20 46 Q14 30 24 16 Q30 8 34 6" stroke="#5b8a39" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="34" cy="9" r="6" fill="#8fce54"/></svg></div>
+        <div class="thumb"><img src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;"></div>
         <div style="flex:1;">
           <div class="cname">Werribee Park GC</div>
           <div class="cmeta">WERRIBEE VIC · PAR 72</div>
@@ -330,7 +332,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
     </div>
   </div>
   <div id="homeCta">
-    <button id="btnStart">Start round ▸</button>
+    <button id="btnStart">Start round</button>
     <button id="btnJoin">Join a mate's round ›</button>
   </div>
   <div id="tabBar">
@@ -379,43 +381,57 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 <!-- ============ ROUND SETUP ============ -->
 <div id="setupScr" class="screen">
   <div class="safeTop"></div>
-  <div class="navRow"><button class="navBack" id="setupBack">‹ Home</button><div class="navTitle">New round</div><div class="navAct"></div></div>
-  <div class="subNote">PICK WHO'S PLAYING · SET TODAY'S HANDICAPS</div>
+  <div class="navRow"><button class="navBack" id="setupBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".8"><polyline points="15 5 8 12 15 19"/></svg></button><div class="navTitle">New round</div><div class="navAct"></div></div>
+  <div class="subNote">PLAYERS</div>
   <div class="listWrap">
-    <div id="playerList" class="glassList glass"></div>
+    <div id="playerList" class="glassList" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;"></div>
     <button id="addPlayer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg> Add player</button>
     <div style="height:14px;"></div>
     <div class="glass" style="border-radius:16px;padding:4px 14px;">
       <div class="setRow" style="padding:10px 0;">
         <div>
-          <div class="setLbl" style="display:flex;align-items:center;gap:9px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="16" r="3"/><line x1="15.5" y1="4" x2="8.5" y2="20"/></svg>Matchplay</div>
+          <div class="setLbl" style="display:flex;align-items:center;gap:10px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="16" r="3"/><line x1="15.5" y1="4" x2="8.5" y2="20"/></svg>Matchplay</div>
           <div class="setSub">1 PT / HOLE TO BEST NETT · TIES SPLIT</div>
         </div>
-        <button class="tgl" id="tglMp">OFF</button>
+        <button class="swt" id="tglMp"><div class="knob"></div></button>
       </div>
     </div>
+    <div class="mono" style="font-size:10px;color:#8b917f;margin-top:10px;line-height:1.5;padding:0 2px;">Nett &amp; matchplay points compute on-device from each player's handicap.</div>
   </div>
-  <div id="setupCta"><button id="btnTeeOff">Tee off ▸</button></div>
+  <div id="setupCta"><button id="btnTeeOff">Create round</button></div>
 </div>
 
 <!-- ============ SCOREBOARD ============ -->
 <div id="boardScr" class="screen">
   <div class="safeTop"></div>
-  <div class="navRow"><button class="navBack" id="boardBack">‹ Map</button><div class="navTitle">Scoreboard</div><button class="navAct" id="boardCard">Card</button></div>
+  <div class="navRow"><button class="navBack" id="boardBack">‹ Map</button><div class="navTitle" style="display:flex;align-items:center;gap:8px;" id="boardTitle">Leaderboard</div><button class="navAct" id="boardCard">Card</button></div>
   <div class="subNote" id="boardNote">LIVE · NETT = GROSS − DAILY HCP BY STROKE INDEX</div>
   <div style="padding:0 16px;"><div id="syncRow" class="glass" style="display:none;"></div></div>
   <div id="boardBody"></div>
 </div>
 
-<!-- ============ JOIN A ROUND ============ -->
+<!-- ============ ROUND CODE (share + join) ============ -->
 <div id="joinScr" class="screen">
   <div class="safeTop"></div>
-  <div class="navRow"><button class="navBack" id="joinBack">‹ Home</button><div class="navTitle">Join round</div><div class="navAct"></div></div>
-  <div class="subNote">GET THE 5-LETTER CODE FROM WHOEVER STARTED IT</div>
-  <div class="listWrap" id="joinBody">
-    <input class="txtIn" id="joinCode" maxlength="5" autocomplete="off" placeholder="CODE">
-    <button id="joinBtn2">Find round</button>
-    <div id="joinPick" style="margin-top:16px;"></div>
+  <div class="navRow"><button class="navBack" id="joinBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".8"><polyline points="15 5 8 12 15 19"/></svg></button><div class="navTitle">Round code</div><div class="navAct"></div></div>
+  <div class="listWrap" id="joinBody" style="display:flex;flex-direction:column;align-items:center;padding-top:14px;">
+    <div id="shareSec" style="display:none;flex-direction:column;align-items:center;width:100%;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 A2 2 0 0 1 5 6 L19 6 A2 2 0 0 1 21 8 L21 10 A2 2 0 0 0 21 14 L21 16 A2 2 0 0 1 19 18 L5 18 A2 2 0 0 1 3 16 L3 14 A2 2 0 0 0 3 10 Z"/><line x1="12" y1="7" x2="12" y2="17" stroke-dasharray="1.5 2.5"/></svg>
+      <div class="mono" style="font-size:11px;letter-spacing:2px;color:#8b917f;margin-top:16px;">SHARE THIS CODE</div>
+      <div class="mono num" id="bigCode" style="font-size:52px;font-weight:700;letter-spacing:8px;margin:10px 0 4px;">—</div>
+      <div style="font-size:13px;color:#a6a9b0;text-align:center;line-height:1.5;">Friends enter it to join your live<br>leaderboard at Werribee Park.</div>
+      <div style="display:flex;gap:10px;margin-top:20px;width:100%;">
+        <button id="shareBig" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:14px;background:rgba(255,255,255,.2);font-weight:700;font-size:15px;padding:13px 0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15 L12 4"/><path d="M8 8 L12 4 L16 8"/><path d="M5 13 L5 19 A1 1 0 0 0 6 20 L18 20 A1 1 0 0 0 19 19 L19 13"/></svg>Share</button>
+        <button id="copyBig" style="flex:1;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:transparent;font-weight:600;font-size:15px;padding:13px 0;">Copy</button>
+      </div>
+      <div style="width:100%;height:1px;background:rgba(255,255,255,.1);margin:22px 0;"></div>
+    </div>
+    <div class="mono" style="font-size:11px;letter-spacing:2px;color:#8b917f;align-self:flex-start;margin-bottom:10px;">OR JOIN A ROUND</div>
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 8px 8px 16px;width:100%;">
+      <input class="mono" id="joinCode" maxlength="5" autocomplete="off" placeholder="CODE" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:20px;font-weight:700;letter-spacing:6px;text-transform:uppercase;-webkit-user-select:text;user-select:text;">
+      <button id="joinBtn2" style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
+    </div>
+    <div id="joinPick" style="margin-top:16px;width:100%;"></div>
   </div>
 </div>
 
@@ -445,25 +461,18 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 
   <div id="strip">
     <div id="stripTop">
-      <div id="holeNav">
         <button class="chev" id="holePrev"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
-        <div>
-          <div id="stripHole">Hole 1</div>
-          <div id="stripPar">PAR 4 · 299 M</div>
-        </div>
-        <button class="chev" id="holeNext"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
+      <div style="text-align:center;">
+        <div id="stripHole">Hole 1</div>
+        <div id="stripPar">PAR 4 · 299 M</div>
       </div>
-      <div>
-        <div id="stripTotLbl">TOTAL</div>
-        <div id="stripTot">E</div>
-      </div>
+      <button class="chev" id="holeNext"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
     </div>
-    <div id="miniNine"></div>
   </div>
 
   <div id="clubChip">
-    <div class="cl">CLUB</div>
-    <div class="cn"><div id="chipName">—</div><span>▾</span></div>
+    <div class="cl"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c9ccc2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 L9 15 C9 18 15 18 15 15 L15 8"/><line x1="15" y1="6" x2="15" y2="8"/><path d="M7 20 L17 20"/></svg><span>CLUB</span></div>
+    <div id="chipName">—</div>
     <div class="cc" id="chipCarry">tap to select</div>
   </div>
 
@@ -488,7 +497,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
         <div id="heroSub">TO CENTER</div>
         <div id="plays" class="num"><span id="playsNum">plays –</span><span id="playsParts"></span></div>
       </div>
-      <button id="btnHit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>Track shot</button>
+      <button id="btnHit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>Track</button>
     </div>
     <div id="quick">
       <button id="btnPrev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>Prev</button>
@@ -870,6 +879,10 @@ const ELEV = {
 
 
 const ICO = {
+  gps: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 L6 14"/><path d="M3.5 6.5 L6 4 L8.5 6.5"/><path d="M6 6 C13 6 11 18 18 18" opacity=".55"/></svg>',
+  tagOn: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5 L12 5 L20 12 L13 19 L5 12 Z"/><circle cx="9" cy="10" r="1.4" fill="#fff" stroke="none"/></svg>',
+  tagOff: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b917f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5 L12 5 L20 12 L13 19 L5 12 Z"/></svg>',
+  podium: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="16" y="15" width="4" height="5" rx="1"/></svg>',
   tick: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 6"/></svg>',
   sync: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b8f98" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8 A8 8 0 0 0 5 6"/><polyline points="4 3 4 7 8 7"/><path d="M4 16 A8 8 0 0 0 19 18"/><polyline points="20 21 20 17 16 17"/></svg>',
   ticket: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 A2 2 0 0 1 5 6 L19 6 A2 2 0 0 1 21 8 L21 10 A2 2 0 0 0 21 14 L21 16 A2 2 0 0 1 19 18 L5 18 A2 2 0 0 1 3 16 L3 14 A2 2 0 0 0 3 10 Z"/><line x1="12" y1="7" x2="12" y2="17" stroke-dasharray="1.5 2.5"/></svg>'
@@ -1165,8 +1178,8 @@ function renderSetup() {
   $("playerList").innerHTML = setupSel.map((p, i) =>
     (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
     '<div class="playerRow' + (p.on ? ' sel' : '') + '" data-pi="' + i + '">' +
-      '<div class="pchk">' + (p.on ? ICO.tick : '') + '</div>' +
-      '<div class="pname">' + p.name + '</div>' +
+      '<div class="pchk" style="border:none;background:none;">' + (p.on ? ICO.tagOn : ICO.tagOff) + '</div>' +
+      '<div class="pname">' + p.name + (p.id === "me" ? ' <span class="mono" style="font-size:10px;color:#8b917f;font-weight:400;">you</span>' : '') + '</div>' +
       '<div class="hcpCtl">' +
         '<button data-h="-1" data-pi="' + i + '">−</button>' +
         '<div class="hv num">' + p.hcp + '<small>HCP</small></div>' +
@@ -1190,7 +1203,6 @@ function renderSetup() {
       renderSetup();
     };
   });
-  $("tglMp").textContent = setupMp ? "ON" : "OFF";
   $("tglMp").classList.toggle("on", setupMp);
 }
 let setupMp = false;
@@ -2284,12 +2296,11 @@ function gpsText() {
 }
 
 function render() {
-  const g = gpsText();
-  $("homeGps").textContent = g.t;
   if (!round) return;
   if (!$("play").classList.contains("on")) return;
 
-  $("gpsBadge").textContent = g.t;
+  const g = gpsText();
+  $("gpsBadge").innerHTML = ICO.gps + "<span>" + g.t.replace("▲ GPS ", "").replace("▲ ", "") + "</span>";
   $("gpsBadge").className = g.c;
 
   const hole = curHole();
@@ -2297,17 +2308,6 @@ function render() {
   const teePt = Object.values(hole.tees)[0];
   const len = teePt && hole.green ? Math.round(hav(teePt[0], teePt[1], hole.green.centre[0], hole.green.centre[1])) : null;
   $("stripPar").textContent = "PAR " + hole.par + (len ? " · " + len + " M" : "");
-  const t = totals(round);
-  $("stripTot").textContent = t.playedHoles ? toParStr(t.diff) : "E";
-  $("stripTot").style.color = t.diff > 0 ? "#ffcf6b" : "#7ed957";
-
-  const nineStart = round.hole <= 9 ? 1 : 10;
-  let mini = "";
-  for (let n = nineStart; n < nineStart + 9; n++) {
-    const sc = holePlayed(round, n) ? scoreOf(round, n) : 0;
-    mini += '<div class="mn' + (n === round.hole ? " cur" : "") + '"><div class="mh">' + n + '</div><div class="ms">' + (sc || "") + '</div></div>';
-  }
-  $("miniNine").innerHTML = mini;
 
   $("chipName").textContent = selClub || "—";
   $("chipCarry").textContent = selClub ? "carry ≈ " + carryOf(selClub) + " m" : "tap to select";
@@ -2449,7 +2449,18 @@ $("tglMp").onclick = () => { setupMp = !setupMp; renderSetup(); };
 $("boardBack").onclick = () => { if (round) show("play"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
 $("boardCard").onclick = () => { const r = round || viewRound; if (r) openCard(r, !round); };
 $("btnBoard").onclick = openBoard;
-$("btnJoin").onclick = () => { if (!syncEnabled()) { alert("Sharing isn't switched on in this build yet."); return; } $("joinPick").innerHTML = ""; show("joinScr"); };
+function openJoinScr() {
+  $("joinPick").innerHTML = "";
+  const sec = $("shareSec");
+  if (round && round.sync) {
+    $("bigCode").textContent = round.sync.code;
+    sec.style.display = "flex";
+    $("shareBig").onclick = () => exportText("Join my round on Shots — code " + round.sync.code + " at https://taylor-hobbs.github.io/golf-shot-tracker/", "Round code");
+    $("copyBig").onclick = async () => { try { await navigator.clipboard.writeText(round.sync.code); toast("CODE COPIED"); } catch {} };
+  } else sec.style.display = "none";
+  show("joinScr");
+}
+$("btnJoin").onclick = () => { if (!syncEnabled()) { alert("Sharing isn't switched on in this build yet."); return; } openJoinScr(); };
 $("joinBack").onclick = () => { renderHome(); show("home"); };
 $("joinBtn2").onclick = findRound;
 $("btnResume").onclick = resumeRound;
