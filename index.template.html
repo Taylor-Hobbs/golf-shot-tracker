@@ -1066,14 +1066,26 @@ function mergeRemote(b) {
   }
   if (changed) saveCur();
 }
+// the shared code we're currently involved with: an active round, or a
+// finished one being viewed (summary/board keep following the server)
+function activeSyncCode() {
+  for (const r of [round, sumRound, viewRound]) if (r && r.sync) return r.sync.code;
+  return null;
+}
 async function pollBoardRemote() {
-  if (!syncEnabled() || !round || !round.sync) return;
-  flushOutbox();
+  const codeNow = activeSyncCode();
+  if (!syncEnabled() || !codeNow) return;
+  if (round) flushOutbox();
   try {
-    const b = await api("GET", "/rounds/" + round.sync.code + "/board");
-    remoteBoard = Object.assign({}, b, { at: Date.now() });
-    mergeRemote(b);
+    const b = await api("GET", "/rounds/" + codeNow + "/board");
+    remoteBoard = Object.assign({}, b, { code: codeNow, at: Date.now() });
+    if (round && round.sync && round.sync.code === codeNow) mergeRemote(b);
     if ($("boardScr").classList.contains("on")) renderBoard();
+    if ($("sumScr").classList.contains("on") && sumRound && sumRound.sync && sumRound.sync.code === codeNow && !openSummary._refreshing) {
+      openSummary._refreshing = true;
+      openSummary(sumRound);
+      openSummary._refreshing = false;
+    }
   } catch {}
 }
 async function syncFinish(r) {
@@ -1128,16 +1140,29 @@ function joinAs(code, info, id, name, hcp) {
   toast("JOINED " + code + " AS " + name.toUpperCase());
 }
 
-// live scoreboard
+// live scoreboard — server is the source of truth whenever reachable;
+// local state is the fallback (and, mid-round, carries my unflushed entries)
 function renderBoard() {
-  const r = round || viewRound;
-  let rows, mp;
-  if (r) { rows = boardRows(r); mp = r.matchplay; }
-  else if (remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
+  const codeNow = activeSyncCode();
+  const vr = sumRound || viewRound;
+  const remoteFresh = remoteBoard && remoteBoard.code === codeNow && (Date.now() - remoteBoard.at) < 120000;
+  let rows, mp, srcNote = "";
+  if (round) {
+    // active round: local + merged remote = my just-entered scores plus
+    // everyone else as of the last poll
+    rows = boardRows(round); mp = round.matchplay;
+    const stale = remoteFresh ? Math.round((Date.now() - remoteBoard.at) / 1000) : null;
+    if (round.sync) srcNote = stale != null ? " · SYNCED " + (stale < 5 ? "NOW" : stale + "S AGO") : " · OFFLINE — LOCAL VIEW";
+  } else if (remoteFresh) {
+    // finished/viewing: pure server truth, so late finishers keep appearing
+    rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay;
+    srcNote = " · LIVE FROM SERVER";
+  } else if (vr) {
+    rows = boardRows(vr); mp = vr.matchplay;
+    if (vr.sync) srcNote = " · OFFLINE SNAPSHOT";
+  } else if (remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
   else return;
-  const stale = remoteBoard ? Math.round((Date.now() - remoteBoard.at) / 1000) : null;
-  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − HCP BY STROKE INDEX" +
-    (stale != null && round && round.sync ? " · SYNCED " + (stale < 5 ? "NOW" : stale + "S AGO") : "");
+  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − HCP BY STROKE INDEX" + srcNote;
   let h = '<div class="bHead' + (mp ? ' mp4' : '') + '"><div>PLAYER</div><div>THRU</div><div>GROSS</div><div>NETT</div>' + (mp ? '<div>PTS</div>' : '') + '</div>';
   h += '<div class="glassList glass">' + rows.map((p, i) =>
     (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
@@ -1176,7 +1201,9 @@ function openBoard() {
 }
 setInterval(() => {
   if (document.visibilityState !== "visible") return;
-  if (round && round.sync) pollBoardRemote();
+  // poll for an active synced round, or whenever a synced board/summary is on screen
+  if ((round && round.sync) ||
+      (activeSyncCode() && ($("boardScr").classList.contains("on") || $("sumScr").classList.contains("on")))) pollBoardRemote();
 }, 20000);
 
 function startRound(cfg) {
@@ -1813,13 +1840,25 @@ function openSummary(r) {
     row("PUTTS", st.puttsTot) + '<div class="hairline"></div>' +
     row("LONGEST DRIVE", st.longest ? st.longest + " m" : "–");
   if (multi(r)) {
-    const rows = boardRows(r);
+    // standings from the server when reachable (late finishers included);
+    // local snapshot otherwise
+    const remoteFresh = r.sync && remoteBoard && remoteBoard.code === r.sync.code && (Date.now() - remoteBoard.at) < 120000;
+    const rows = remoteFresh ? boardRowsRemote(remoteBoard) : boardRows(r);
     listHtml += '<div class="hairline"></div>' + rows.map((p, i) =>
       row((i + 1) + ". " + p.name, (r.matchplay ? (Math.round(p.mp * 2) / 2) + " pts · " : "") + "nett " + (p.thru ? p.nett : "–"))
-    ).join('<div class="hairline"></div>');
+    ).join('<div class="hairline"></div>') +
+    (r.sync ? '<div class="hairline"></div>' + row("SCOREBOARD", remoteFresh ? "LIVE · CODE " + r.sync.code : "OFFLINE · CODE " + r.sync.code) : "");
   }
   $("sumList").innerHTML = listHtml;
   show("sumScr");
+  // follow the server after showing: if fresher standings arrive, re-render
+  if (r.sync && syncEnabled() && !openSummary._refreshing) {
+    openSummary._refreshing = true;
+    api("GET", "/rounds/" + r.sync.code + "/board").then(b => {
+      remoteBoard = Object.assign({}, b, { code: r.sync.code, at: Date.now() });
+      if ($("sumScr").classList.contains("on") && sumRound === r) openSummary(r);
+    }).catch(() => {}).finally(() => { openSummary._refreshing = false; });
+  }
 }
 $("btnSaveRound").onclick = () => { sumRound = null; renderHome(); show("home"); };
 $("btnSumMore").onclick = () => { if (sumRound) openCard(sumRound, true); };
