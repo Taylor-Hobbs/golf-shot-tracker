@@ -12,7 +12,7 @@
 <style>
 /*__FONTS__*/
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
-html,body { background:#000; color:#fff; font-family:-apple-system,"SF Pro Display",system-ui,sans-serif; height:100%; overflow:hidden; }
+html,body { background:#0c0d10; color:#fff; font-family:-apple-system,"SF Pro Display",system-ui,sans-serif; height:100%; overflow:hidden; }
 button { font-family:inherit; border:none; color:#fff; background:none; }
 .mono { font-family:'JetBrains Mono',ui-monospace,monospace; }
 .screen { display:none; flex-direction:column; height:100dvh; }
@@ -22,7 +22,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .hairline { height:.5px; background:rgba(255,255,255,.08); }
 
 /* ============ HOME ============ */
-#home { background:#000; }
+#home { background:#0c0d10; }
 .safeTop { height:calc(env(safe-area-inset-top) + 10px); flex:none; }
 #brandRow { flex:none; padding:6px 22px 4px; display:flex; align-items:center; justify-content:space-between; }
 #brandRow .wordmark { display:flex; align-items:center; gap:9px; font-size:19px; font-weight:700; letter-spacing:1px; }
@@ -170,7 +170,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .glassList { border-radius:16px; overflow:hidden; }
 
 /* ============ SCORECARD ============ */
-#cardScr { background:#000; }
+#cardScr { background:#0c0d10; }
 #cardNav { padding:6px 20px 4px; display:flex; align-items:center; justify-content:space-between; }
 #cardBack { font-size:15px; color:#fff; }
 #cardTitle { font-size:17px; font-weight:700; letter-spacing:-.3px; }
@@ -197,7 +197,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #btnEndEarly { display:none; width:100%; border-radius:12px; background:rgba(255,86,70,.12); border:.5px solid rgba(255,86,70,.35); color:#ff8a7a; font-weight:600; font-size:13px; padding:11px 0; }
 
 /* ============ ROUND SUMMARY ============ */
-#sumScr { background:#000; }
+#sumScr { background:#0c0d10; }
 #sumHead { padding:24px 22px 0; flex:none; }
 #sumKicker { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; letter-spacing:2px; color:#fff; }
 #sumCourse { font-size:30px; font-weight:700; letter-spacing:-.6px; margin-top:6px; }
@@ -255,17 +255,18 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #btnTeeOff { width:100%; border-radius:18px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:20px; padding:18px 0; }
 
 /* ============ SCOREBOARD ============ */
-#boardBody { flex:1; overflow-y:auto; padding:0 16px calc(16px + env(safe-area-inset-bottom)); }
-.bRow { display:grid; grid-template-columns:1fr 44px 52px 52px; gap:6px; align-items:center; padding:11px 14px; }
-.bRow.mp4 { grid-template-columns:1fr 44px 52px 52px 44px; }
-.bRow .bp { font-size:15px; font-weight:600; }
-.bRow .bhcp { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; margin-top:2px; }
-.bRow .bc { text-align:right; font-variant-numeric:tabular-nums; }
-.bRow .bc b { font-size:17px; font-weight:700; }
-.bRow .bc small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; letter-spacing:.5px; }
-.bHead { display:grid; grid-template-columns:1fr 44px 52px 52px; gap:6px; padding:6px 14px 4px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; letter-spacing:1px; }
-.bHead.mp4 { grid-template-columns:1fr 44px 52px 52px 44px; }
-.bHead div { text-align:right; } .bHead div:first-child { text-align:left; }
+#boardBody { flex:1; overflow-y:auto; padding:0 16px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:9px; }
+.lbRow { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); border:.5px solid rgba(255,255,255,.1); border-radius:14px; padding:12px 14px; flex:none; }
+.lbRow.lead { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.16); }
+.lbRow .pos { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:16px; font-weight:700; width:20px; flex:none; }
+.lbRow .pn2 { font-size:15px; font-weight:600; }
+.lbRow .pn2 span { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#8b917f; font-weight:400; }
+.lbRow .psub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#8b917f; margin-top:1px; }
+.lbRow .pres { text-align:right; flex:none; margin-left:auto; }
+.lbRow .pres b { font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
+.lbRow .pres small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; letter-spacing:.5px; }
+#boardFoot { display:flex; align-items:center; gap:8px; padding:4px 4px 0; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px; color:#8b917f; flex:none; }
+#quick button, .chev, #btnHit, #btnPrev, #btnUndo, #btnNext { display:flex; align-items:center; justify-content:center; gap:6px; }
 #btnJoin { width:100%; text-align:center; color:#9aa08f; font-size:13px; font-weight:600; padding:10px 0 2px; }
 .txtIn { width:100%; background:rgba(120,120,128,.2); border:.5px solid rgba(255,255,255,.14); border-radius:13px; padding:13px 14px; color:#fff; font-size:24px; font-weight:700; text-align:center; letter-spacing:8px; font-family:'JetBrains Mono',ui-monospace,monospace; text-transform:uppercase; -webkit-user-select:text; user-select:text; }
 .txtIn.name { letter-spacing:0; font-size:17px; font-family:inherit; font-weight:600; }
@@ -292,12 +293,12 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div class="safeTop"></div>
   <div id="brandRow">
     <div class="wordmark">
-      <svg width="18" height="22" viewBox="0 0 18 22"><line x1="3" y1="1" x2="3" y2="21" stroke="#f4f4f4" stroke-width="2"/><path d="M3 1 L15 5 L3 9 Z" fill="#fff"/></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="8" ry="6.5" opacity=".9"/><ellipse cx="12" cy="13" rx="4" ry="3.2" opacity=".55"/><line x1="12" y1="13" x2="12" y2="3"/><path d="M12 3 L18 5 L12 7 Z"/></svg>
       SHOTS
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div id="homeGps">▲ GPS —</div>
-      <button id="gearBtn">⚙</button>
+      <button id="gearBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5 L12 5 M12 19 L12 21.5 M2.5 12 L5 12 M19 12 L21.5 12 M5.2 5.2 L7 7 M17 17 L18.8 18.8 M18.8 5.2 L17 7 M7 17 L5.2 18.8"/></svg></button>
     </div>
   </div>
   <div id="homeScroll">
@@ -309,12 +310,12 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       <button id="btnResume">Resume</button>
     </div>
     <div id="quickRow">
-      <button class="qchip glass" id="qBag"><div class="qi">⛳</div><div class="ql">My Bag</div></button>
-      <button class="qchip glass" id="qYd"><div class="qi">📏</div><div class="ql">Yardages</div></button>
-      <button class="qchip glass" id="qSg"><div class="qi">📊</div><div class="ql">Insights</div></button>
+      <button class="qchip glass" id="qBag"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 L9 15 C9 18 15 18 15 15 L15 8"/><line x1="15" y1="6" x2="15" y2="8"/><path d="M7 20 L17 20"/></svg></div><div class="ql">My Bag</div></button>
+      <button class="qchip glass" id="qYd"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12" stroke-dasharray="1.5 3.5"/><path d="M16 8 L20 12 L16 16"/></svg></div><div class="ql">Yardages</div></button>
+      <button class="qchip glass" id="qSg"><div class="qi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg></div><div class="ql">Insights</div></button>
     </div>
     <div class="sectLabel">SELECT COURSE</div>
-    <div id="search"><span>⌕</span><span>Search courses</span></div>
+    <div id="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><line x1="16" y1="16" x2="21" y2="21"/></svg><span>Search courses</span></div>
     <div id="courseList" class="glass">
       <div class="courseRow">
         <div class="thumb"><svg width="46" height="46" viewBox="0 0 52 52"><rect width="52" height="52" fill="#2f4023"/><path d="M20 46 Q14 30 24 16 Q30 8 34 6" stroke="#5b8a39" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="34" cy="9" r="6" fill="#8fce54"/></svg></div>
@@ -322,7 +323,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
           <div class="cname">Werribee Park GC</div>
           <div class="cmeta">WERRIBEE VIC · PAR 72</div>
         </div>
-        <div class="check">✓</div>
+        <div class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 6"/></svg></div>
       </div>
     </div>
   </div>
@@ -331,16 +332,16 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
     <button id="btnJoin">Join a mate's round ›</button>
   </div>
   <div id="tabBar">
-    <button class="tab on" data-tab="home"><span>⛳</span>Play</button>
-    <button class="tab" data-tab="rnd"><span>≣</span>Rounds</button>
-    <button class="tab" data-tab="sg"><span>◫</span>Stats</button>
+    <button class="tab on" data-tab="home"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="3" x2="7" y2="21"/><path d="M7 4 L17 7 L7 10 Z"/></svg></span>Play</button>
+    <button class="tab" data-tab="rnd"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg></span>Rounds</button>
+    <button class="tab" data-tab="sg"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg></span>Stats</button>
   </div>
 </div>
 
 <!-- ============ ROUNDS ============ -->
 <div id="rndScr" class="screen">
   <div class="safeTop"></div>
-  <div class="navRow"><button class="navBack" id="rndBack">‹ Home</button><div class="navTitle">Rounds</div><button class="navAct" id="btnExportAll">⤴</button></div>
+  <div class="navRow"><button class="navBack" id="rndBack">‹ Home</button><div class="navTitle">Rounds</div><button class="navAct" id="btnExportAll"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15 L12 4"/><path d="M8 8 L12 4 L16 8"/><path d="M5 13 L5 19 A1 1 0 0 0 6 20 L18 20 A1 1 0 0 0 19 19 L19 13"/></svg></button></div>
   <div class="subNote" id="rndNote">SAVED ON THIS PHONE · ⤴ EXPORTS ALL</div>
   <div class="listWrap"><div id="rndList" class="glassList glass"></div></div>
 </div>
@@ -380,12 +381,12 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div class="subNote">PICK WHO'S PLAYING · SET TODAY'S HANDICAPS</div>
   <div class="listWrap">
     <div id="playerList" class="glassList glass"></div>
-    <button id="addPlayer">＋ Add player</button>
+    <button id="addPlayer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg> Add player</button>
     <div style="height:14px;"></div>
     <div class="glass" style="border-radius:16px;padding:4px 14px;">
       <div class="setRow" style="padding:10px 0;">
         <div>
-          <div class="setLbl">Matchplay</div>
+          <div class="setLbl" style="display:flex;align-items:center;gap:9px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="16" r="3"/><line x1="15.5" y1="4" x2="8.5" y2="20"/></svg>Matchplay</div>
           <div class="setSub">1 PT / HOLE TO BEST NETT · TIES SPLIT</div>
         </div>
         <button class="tgl" id="tglMp">OFF</button>
@@ -421,7 +422,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 <div id="sumScr" class="screen">
   <div class="safeTop"></div>
   <div id="sumHead">
-    <div id="sumKicker">ROUND COMPLETE</div>
+    <div id="sumKicker" style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 L17 4 L17 8 C17 12 14 13 12 13 C10 13 7 12 7 8 Z"/><path d="M7 5 L4 5 C4 8 5 9 7 9 M17 5 L20 5 C20 8 19 9 17 9"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 20 L16 20 L16 20 C16 18 14 17 12 17 C10 17 8 18 8 20 Z"/></svg>ROUND COMPLETE</div>
     <div id="sumCourse">Werribee Park</div>
     <div id="sumMeta"></div>
   </div>
@@ -443,12 +444,12 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div id="strip">
     <div id="stripTop">
       <div id="holeNav">
-        <button class="chev" id="holePrev">‹</button>
+        <button class="chev" id="holePrev"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button>
         <div>
           <div id="stripHole">Hole 1</div>
           <div id="stripPar">PAR 4 · 299 M</div>
         </div>
-        <button class="chev" id="holeNext">›</button>
+        <button class="chev" id="holeNext"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
       </div>
       <div>
         <div id="stripTotLbl">TOTAL</div>
@@ -475,7 +476,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   </div>
 
   <div id="toast"></div>
-  <button id="recenter">⌖</button>
+  <button id="recenter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><line x1="12" y1="1.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22.5" y2="12"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/></svg></button>
   <div id="attrib">Imagery © Vicmap, State of Victoria · CC BY 4.0</div>
 
   <div id="sheet">
@@ -485,13 +486,13 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
         <div id="heroSub">TO CENTER</div>
         <div id="plays" class="num"><span id="playsNum">plays –</span><span id="playsParts"></span></div>
       </div>
-      <button id="btnHit"><span>＋</span>Track shot</button>
+      <button id="btnHit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>Track shot</button>
     </div>
     <div id="quick">
-      <button id="btnPrev">◀ Prev</button>
-      <button id="btnUndo">Undo</button>
-      <button id="btnBoard">🏆</button>
-      <button id="btnNext">Next ▶</button>
+      <button id="btnPrev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>Prev</button>
+      <button id="btnUndo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8 C7 4 13 3 17 6 C21 9 21 15 17 18 C13 21 7 20 5 16"/><polyline points="4 4 4 8 8 8"/></svg>Undo</button>
+      <button id="btnBoard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="16" y="15" width="4" height="5" rx="1"/></svg></button>
+      <button id="btnNext">Next<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button>
     </div>
   </div>
 </div>
@@ -502,7 +503,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div id="cardNav">
     <button id="cardBack">‹ Map</button>
     <div id="cardTitle">Scorecard</div>
-    <button id="cardShare">⤴</button>
+    <button id="cardShare"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15 L12 4"/><path d="M8 8 L12 4 L16 8"/><path d="M5 13 L5 19 A1 1 0 0 0 6 20 L18 20 A1 1 0 0 0 19 19 L19 13"/></svg></button>
   </div>
   <div id="cardDate">WERRIBEE PARK</div>
   <div id="cardBody"></div>
@@ -649,6 +650,12 @@ function carryOf(id, stats) {
 }
 
 /*__ELEV__*/
+
+const ICO = {
+  tick: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 6"/></svg>',
+  sync: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b8f98" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8 A8 8 0 0 0 5 6"/><polyline points="4 3 4 7 8 7"/><path d="M4 16 A8 8 0 0 0 19 18"/><polyline points="20 21 20 17 16 17"/></svg>',
+  ticket: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 A2 2 0 0 1 5 6 L19 6 A2 2 0 0 1 21 8 L21 10 A2 2 0 0 0 21 14 L21 16 A2 2 0 0 1 19 18 L5 18 A2 2 0 0 1 3 16 L3 14 A2 2 0 0 0 3 10 Z"/><line x1="12" y1="7" x2="12" y2="17" stroke-dasharray="1.5 2.5"/></svg>'
+};
 
 const LS_CUR = "golf_current_v1";
 const LS_ROUNDS = "golf_rounds_v1";
@@ -940,7 +947,7 @@ function renderSetup() {
   $("playerList").innerHTML = setupSel.map((p, i) =>
     (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
     '<div class="playerRow' + (p.on ? ' sel' : '') + '" data-pi="' + i + '">' +
-      '<div class="pchk">' + (p.on ? '✓' : '') + '</div>' +
+      '<div class="pchk">' + (p.on ? ICO.tick : '') + '</div>' +
       '<div class="pname">' + p.name + '</div>' +
       '<div class="hcpCtl">' +
         '<button data-h="-1" data-pi="' + i + '">−</button>' +
@@ -1162,26 +1169,47 @@ function renderBoard() {
     if (vr.sync) srcNote = " · OFFLINE SNAPSHOT";
   } else if (remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
   else return;
-  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − HCP BY STROKE INDEX" + srcNote;
-  let h = '<div class="bHead' + (mp ? ' mp4' : '') + '"><div>PLAYER</div><div>THRU</div><div>GROSS</div><div>NETT</div>' + (mp ? '<div>PTS</div>' : '') + '</div>';
-  h += '<div class="glassList glass">' + rows.map((p, i) =>
-    (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
-    '<div class="bRow' + (mp ? ' mp4' : '') + '">' +
-      '<div><div class="bp">' + p.name + '</div><div class="bhcp">HCP ' + p.hcp + '</div></div>' +
-      '<div class="bc num"><b>' + (p.thru || "–") + '</b></div>' +
-      '<div class="bc num"><b>' + (p.thru ? p.gross : "–") + '</b><small>' + fmtDiff(p.grossDiff, p.thru) + '</small></div>' +
-      '<div class="bc num"><b>' + (p.thru ? p.nett : "–") + '</b><small>' + fmtDiff(p.nettDiff, p.thru) + '</small></div>' +
-      (mp ? '<div class="bc num"><b>' + (Math.round(p.mp * 2) / 2) + '</b></div>' : '') +
-    '</div>').join("") + '</div>';
-  $("boardBody").innerHTML = h;
+  const codeShown = activeSyncCode();
+  const maxThru = Math.max(0, ...rows.map(p => p.thru));
+  $("boardNote").textContent = (codeShown ? codeShown + " · " : "") + (mp ? "MATCHPLAY" : "STROKEPLAY") + " · THRU " + maxThru;
+  // this viewer's row, for the "you" tag
+  const meRow = (round || sumRound || viewRound) ? ((round || sumRound || viewRound).syncAs || "me") : null;
+  const half = v => (Math.round(v * 2) / 2).toString().replace(".5", "½");
+  const result = (p, i) => {
+    if (mp) {
+      // match status vs the leader (leader shows their cushion over 2nd)
+      const other = i === 0 ? rows[1] : rows[0];
+      if (!other) return "<b>" + half(p.mp) + "</b><small>PTS</small>";
+      const diff = Math.round((p.mp - other.mp) * 2) / 2;
+      if (diff > 0) return "<b>+" + half(diff) + "</b><small>UP</small>";
+      if (diff < 0) return "<b>−" + half(-diff) + "</b><small>DN</small>";
+      return "<b>AS</b><small>—</small>";
+    }
+    return "<b>" + fmtDiff(p.nettDiff, p.thru) + "</b><small>NETT</small>";
+  };
+  $("boardBody").innerHTML = rows.map((p, i) =>
+    '<div class="lbRow' + (i === 0 ? ' lead' : '') + '">' +
+      '<div class="pos num">' + (i + 1) + '</div>' +
+      '<div><div class="pn2">' + p.name + (p.id === meRow ? ' <span>you</span>' : '') + '</div>' +
+      '<div class="psub">HCP ' + p.hcp + ' · NETT ' + (p.thru ? p.nett : "–") + ' · GROSS ' + (p.thru ? p.gross : "–") + ' · THRU ' + p.thru + '</div></div>' +
+      '<div class="pres num">' + result(p, i) + '</div>' +
+    '</div>').join("") +
+    '<div id="boardFoot">' + ICO.sync + '<span>' +
+      (srcNote.indexOf("OFFLINE") >= 0 ? srcNote.replace(" · ", "") : "Synced " + (remoteBoard && remoteBoard.code === codeShown ? Math.max(0, Math.round((Date.now() - remoteBoard.at) / 1000)) + "s ago" : "—")) +
+      ' · last-write-wins</span></div>';
   // share / sync row
   const sr = $("syncRow");
   if (round && syncEnabled()) {
     if (round.sync) {
       const asWho = round.syncAs ? " · PLAYING AS " + (SET.myName || "?").toUpperCase() : "";
-      sr.innerHTML = '<div><div class="scode">' + round.sync.code + '</div><div class="sinfo">MATES: OPEN THE APP → JOIN A MATE\'S ROUND' + asWho + '</div></div><button id="shareCode">Share</button>';
+      sr.innerHTML = '<div style="display:flex;align-items:center;gap:10px;">' + ICO.ticket + '<div><div class="scode">' + round.sync.code + '</div><div class="sinfo">MATES: OPEN THE APP → JOIN A MATE\'S ROUND' + asWho + '</div></div></div>' +
+        '<div style="display:flex;gap:8px;"><button id="copyCode">Copy</button><button id="shareCode">Share</button></div>';
       sr.style.display = "flex";
       $("shareCode").onclick = () => exportText("Join my round on Shots — code " + round.sync.code + " at https://taylor-hobbs.github.io/golf-shot-tracker/", "Round code");
+      $("copyCode").onclick = async () => {
+        try { await navigator.clipboard.writeText(round.sync.code); toast("CODE COPIED"); }
+        catch { toast(round.sync.code); }
+      };
     } else {
       sr.innerHTML = '<div><div class="sinfo">NOT SHARED YET — NEEDS RECEPTION ONCE</div></div><button id="shareCode">Get code</button>';
       sr.style.display = "flex";
