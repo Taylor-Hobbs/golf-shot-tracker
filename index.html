@@ -109,7 +109,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #heroSub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; letter-spacing:1.5px; color:#9aa08f; margin-top:6px; }
 #btnHit { border-radius:16px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:15px; padding:14px 18px; display:flex; align-items:center; gap:6px; box-shadow:0 8px 18px -6px rgba(0,0,0,.45); }
 #btnHit span { font-size:19px; line-height:1; }
-#quick { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+#quick { display:grid; grid-template-columns:1.1fr 1fr .7fr 1.1fr; gap:8px; margin-top:14px; }
 #quick button { border-radius:12px; background:rgba(255,255,255,.14); color:#fff; font-weight:600; font-size:13px; padding:11px 0; }
 #toast { position:absolute; left:0; right:0; bottom:calc(190px + env(safe-area-inset-bottom)); text-align:center; pointer-events:none; }
 #toast div { display:inline-block; background:rgba(22,22,24,.7); border:.5px solid rgba(255,255,255,.18); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; padding:5px 12px; border-radius:12px; }
@@ -420,13 +420,6 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   </div>
 </div>
 
-<!-- ============ MATE SCORE ENTRY ============ -->
-<div id="entryScr" class="screen">
-  <div class="safeTop"></div>
-  <div class="navRow"><button class="navBack" id="entryLeave">Leave</button><div class="navTitle" id="entryTitle">Scoring</div><button class="navAct" id="entryBoard">Board</button></div>
-  <div class="subNote" id="entryNote"></div>
-  <div class="listWrap"><div id="entryList" class="glassList glass"></div></div>
-</div>
 
 <!-- ============ ROUND SUMMARY ============ -->
 <div id="sumScr" class="screen">
@@ -502,6 +495,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
     <div id="quick">
       <button id="btnPutt">＋ Putt</button>
       <button id="btnUndo">Undo</button>
+      <button id="btnBoard">🏆</button>
       <button id="btnNext">Next ▶</button>
     </div>
   </div>
@@ -1130,9 +1124,10 @@ function computeBoard(entrants, getScore, matchplay) {
   return rows;
 }
 function boardRows(r) {
-  const entrants = [{ id: "me", name: SET.myName || "You", hcp: r.myHcp || 0 }, ...(r.mates || [])];
+  const self = r.syncAs || "me";
+  const entrants = [{ id: self, name: SET.myName || "You", hcp: r.myHcp || 0 }, ...(r.mates || [])];
   return computeBoard(entrants,
-    (id, h) => id === "me" ? (holePlayed(r, h) ? scoreOf(r, h) : null) : (mateScore(r, id, h) != null ? mateScore(r, id, h) : null),
+    (id, h) => id === self ? (holePlayed(r, h) ? scoreOf(r, h) : null) : (mateScore(r, id, h) != null ? mateScore(r, id, h) : null),
     r.matchplay);
 }
 function boardRowsRemote(b) {
@@ -1210,17 +1205,17 @@ function addPlayerPrompt() {
 
 // ---------- cloud sync (Railway API; additive — solo/offline untouched) ----------
 const API_BASE = "https://golf-tracker-api-production.up.railway.app";
-const LS_JOIN = "golf_join_v1";
-let joinSess = (() => { try { return JSON.parse(localStorage.getItem(LS_JOIN)); } catch { return null; } })();
-function saveJoin() { joinSess ? localStorage.setItem(LS_JOIN, JSON.stringify(joinSess)) : localStorage.removeItem(LS_JOIN); }
 let remoteBoard = null;
 function syncEnabled() { return !!API_BASE; }
+// this device's identity in the shared round: the creator is "me",
+// a joiner carries the player id they picked when joining
+function selfId() { return (round && round.syncAs) || "me"; }
 async function api(method, path, body) {
   const res = await fetch(API_BASE + path, {
     method, headers: { "Content-Type": "application/json" },
     body: body != null ? JSON.stringify(body) : undefined
   });
-  if (!res.ok) throw new Error("api " + res.status);
+  if (!res.ok) { const e = new Error("api " + res.status); e.status = res.status; throw e; }
   return res.json();
 }
 async function ensureSync() {
@@ -1238,6 +1233,7 @@ async function ensureSync() {
 }
 function queueScore(playerId, hole, gross, putts) {
   if (!round || !syncEnabled()) return;
+  if (!(gross >= 1 && gross <= 20)) return; // never queue what the server will reject
   round.outbox = (round.outbox || []).filter(o => !(o.playerId === playerId && o.hole === hole));
   round.outbox.push({ playerId, hole, gross, putts: putts == null ? null : putts, ts: Date.now() });
   saveCur();
@@ -1252,19 +1248,27 @@ async function flushOutbox() {
     await api("POST", "/rounds/" + round.sync.code + "/scores", batch);
     round.outbox = round.outbox.slice(batch.length);
     saveCur();
-  } catch {} finally { flushing = false; }
+  } catch (e) {
+    if (e && e.status >= 400 && e.status < 500) {
+      // server says the batch itself is bad — retrying forever would wedge the
+      // queue, so drop it rather than block every later score
+      round.outbox = round.outbox.slice(Math.min(100, round.outbox.length));
+      saveCur();
+    }
+  } finally { flushing = false; }
 }
-// remote is authoritative for everyone except me; my scores flow out via the queue
+// remote is authoritative for everyone except this device's player
 function mergeRemote(b) {
   let changed = false;
+  const self = selfId();
   for (const p of b.players) {
-    if (p.id === "me") continue;
+    if (p.id === self) continue;
     const m = (round.mates || []).find(x => x.id === p.id);
     if (!m) { round.mates = round.mates || []; round.mates.push({ id: p.id, name: p.name, hcp: p.hcp }); changed = true; }
     else if (m.hcp !== p.hcp || m.name !== p.name) { m.hcp = p.hcp; m.name = p.name; changed = true; }
   }
   for (const s of b.scores) {
-    if (s.playerId === "me") continue;
+    if (s.playerId === self) continue;
     round.mateScores = round.mateScores || {};
     if ((round.mateScores[s.playerId] || {})[s.hole] !== s.gross) {
       (round.mateScores[s.playerId] = round.mateScores[s.playerId] || {})[s.hole] = s.gross;
@@ -1274,14 +1278,12 @@ function mergeRemote(b) {
   if (changed) saveCur();
 }
 async function pollBoardRemote() {
-  const code = round && round.sync ? round.sync.code : (joinSess ? joinSess.code : null);
-  if (!syncEnabled() || !code) return;
+  if (!syncEnabled() || !round || !round.sync) return;
   flushOutbox();
-  flushJoinOutbox();
   try {
-    const b = await api("GET", "/rounds/" + code + "/board");
+    const b = await api("GET", "/rounds/" + round.sync.code + "/board");
     remoteBoard = Object.assign({}, b, { at: Date.now() });
-    if (round) mergeRemote(b);
+    mergeRemote(b);
     if ($("boardScr").classList.contains("on")) renderBoard();
   } catch {}
 }
@@ -1289,11 +1291,12 @@ async function syncFinish(r) {
   if (!syncEnabled() || !r.sync) return;
   try {
     if ((r.outbox || []).length) await api("POST", "/rounds/" + r.sync.code + "/scores", r.outbox);
-    await api("PUT", "/rounds/" + r.sync.code + "/shots", r);
+    await api("PUT", "/rounds/" + r.sync.code + "/shots/" + (r.syncAs || "me"), r);
   } catch {}
 }
 
-// joiner (mate's phone): code -> pick name -> 18-hole entry list
+// joining a mate's round = the FULL app (GPS, tracking, plays-like, sliders),
+// just linked to the shared round under the picked identity
 async function findRound() {
   const code = ($("joinCode").value || "").trim().toUpperCase();
   if (code.length !== 5) { alert("Codes are 5 characters."); return; }
@@ -1321,61 +1324,31 @@ async function findRound() {
   };
 }
 function joinAs(code, info, id, name, hcp) {
-  joinSess = { code, playerId: id, name, hcp, course: info.course, matchplay: info.matchplay, scores: {}, outbox: [] };
-  saveJoin();
-  openEntry();
-  pollBoardRemote();
-}
-function openEntry() {
-  $("entryTitle").textContent = joinSess.name;
-  $("entryNote").textContent = "CODE " + joinSess.code + " · TAP − / ＋ TO SCORE EACH HOLE";
-  $("entryList").innerHTML = COURSE.holes.map((h, i) => {
-    const v = joinSess.scores[h.num];
-    return (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
-      '<div class="heRow"><div class="hn num">H' + h.num + '<small>PAR ' + h.par + ' · IDX ' + INDEX[h.num] + '</small></div>' +
-      '<div class="mateCtl"><button data-eh="' + h.num + '" data-d="-1">−</button>' +
-      '<div class="mv num" id="ev' + h.num + '">' + (v != null ? v : "–") + '</div>' +
-      '<button data-eh="' + h.num + '" data-d="1">＋</button></div></div>';
-  }).join("");
-  document.querySelectorAll("#entryList button").forEach(b => b.onclick = () => {
-    const h = +b.dataset.eh;
-    const par = COURSE.holes.find(x => x.num === h).par;
-    const cur = joinSess.scores[h];
-    const v = cur == null ? par : Math.max(1, Math.min(12, cur + (+b.dataset.d)));
-    joinSess.scores[h] = v;
-    $("ev" + h).textContent = v;
-    joinSess.outbox = (joinSess.outbox || []).filter(o => o.hole !== h);
-    joinSess.outbox.push({ playerId: joinSess.playerId, hole: h, gross: v, putts: null, ts: Date.now() });
-    saveJoin();
-    flushJoinOutbox();
+  if (loadCur() && !confirm("You have a round in progress. Discard it and join " + code + "?")) return;
+  localStorage.removeItem(LS_CUR);
+  SET.myName = name; saveSet();
+  startRound({
+    myHcp: hcp,
+    mates: info.players.filter(p => p.id !== id).map(p => ({ id: p.id, name: p.name, hcp: p.hcp })),
+    matchplay: info.matchplay
   });
-  show("entryScr");
-}
-let jFlushing = false;
-async function flushJoinOutbox() {
-  if (jFlushing || !syncEnabled() || !joinSess || !(joinSess.outbox || []).length) return;
-  jFlushing = true;
-  try {
-    await api("POST", "/rounds/" + joinSess.code + "/scores", joinSess.outbox);
-    joinSess.outbox = [];
-    saveJoin();
-  } catch {} finally { jFlushing = false; }
+  round.sync = { code: code, roundId: info.roundId };
+  round.syncAs = id;
+  saveCur();
+  pollBoardRemote();
+  toast("JOINED " + code + " AS " + name.toUpperCase());
 }
 
 // live scoreboard
 function renderBoard() {
-  // joiner (or ended local round with a live remote) renders the server board;
-  // the owner renders local state, which pollBoardRemote keeps merged
-  const remoteMode = !round && (joinSess || (remoteBoard && !viewRound));
   const r = round || viewRound;
   let rows, mp;
-  if (remoteMode && remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
-  else if (r) { rows = boardRows(r); mp = r.matchplay; }
+  if (r) { rows = boardRows(r); mp = r.matchplay; }
   else if (remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
   else return;
   const stale = remoteBoard ? Math.round((Date.now() - remoteBoard.at) / 1000) : null;
   $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − HCP BY STROKE INDEX" +
-    (stale != null && (joinSess || (round && round.sync)) ? " · SYNCED " + (stale < 5 ? "NOW" : stale + "S AGO") : "");
+    (stale != null && round && round.sync ? " · SYNCED " + (stale < 5 ? "NOW" : stale + "S AGO") : "");
   let h = '<div class="bHead' + (mp ? ' mp4' : '') + '"><div>PLAYER</div><div>THRU</div><div>GROSS</div><div>NETT</div>' + (mp ? '<div>PTS</div>' : '') + '</div>';
   h += '<div class="glassList glass">' + rows.map((p, i) =>
     (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
@@ -1391,7 +1364,8 @@ function renderBoard() {
   const sr = $("syncRow");
   if (round && syncEnabled()) {
     if (round.sync) {
-      sr.innerHTML = '<div><div class="scode">' + round.sync.code + '</div><div class="sinfo">MATES: OPEN THE APP → JOIN A MATE\'S ROUND</div></div><button id="shareCode">Share</button>';
+      const asWho = round.syncAs ? " · PLAYING AS " + (SET.myName || "?").toUpperCase() : "";
+      sr.innerHTML = '<div><div class="scode">' + round.sync.code + '</div><div class="sinfo">MATES: OPEN THE APP → JOIN A MATE\'S ROUND' + asWho + '</div></div><button id="shareCode">Share</button>';
       sr.style.display = "flex";
       $("shareCode").onclick = () => exportText("Join my round on Shots — code " + round.sync.code + " at https://taylor-hobbs.github.io/golf-shot-tracker/", "Round code");
     } else {
@@ -1402,11 +1376,8 @@ function renderBoard() {
         catch { toast("NO CONNECTION — TRY AGAIN WITH RECEPTION"); }
       };
     }
-  } else if (joinSess && !round) {
-    sr.innerHTML = '<div><div class="scode">' + joinSess.code + '</div><div class="sinfo">SCORING AS ' + joinSess.name.toUpperCase() + '</div></div>';
-    sr.style.display = "flex";
   } else sr.style.display = "none";
-  $("boardBack").textContent = round ? "‹ Map" : (joinSess ? "‹ Scoring" : "‹ Back");
+  $("boardBack").textContent = round ? "‹ Map" : "‹ Back";
   $("boardCard").style.display = (round || viewRound) ? "block" : "none";
 }
 function openBoard() {
@@ -1416,7 +1387,7 @@ function openBoard() {
 }
 setInterval(() => {
   if (document.visibilityState !== "visible") return;
-  if ((round && round.sync) || joinSess) pollBoardRemote();
+  if (round && round.sync) pollBoardRemote();
 }, 20000);
 
 function startRound(cfg) {
@@ -1487,6 +1458,7 @@ function jumpHole(dir) {
   saveCur(); render();
 }
 // "Next" opens the score-entry sheet prefilled from tracked shots
+let ssDirty = new Set(), ssHad = {};
 function openScoreSheet() {
   const hole = curHole();
   const tracked = holeShots(round.hole).length;
@@ -1497,9 +1469,14 @@ function openScoreSheet() {
   $("ssPutts").value = d ? d.putts : putts(round.hole).length;
   $("ssScoreVal").textContent = $("ssScore").value;
   $("ssPuttsVal").textContent = $("ssPutts").value;
-  // mates: stepper per player, prefilled with existing entry or par
+  // mates: stepper per player, prefilled with their known score (self-entered
+  // or synced) or par. Untouched steppers only save when the player has no
+  // score yet — so this can never clobber a mate scoring themselves.
+  ssDirty = new Set();
+  ssHad = {};
   $("ssMates").innerHTML = (round.mates || []).map((m, i) => {
     const v = mateScore(round, m.id, round.hole);
+    ssHad[i] = v != null;
     return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
       '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
       '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
@@ -1508,6 +1485,7 @@ function openScoreSheet() {
   document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
     const el = $("mv" + b.dataset.mi);
     el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
+    ssDirty.add(+b.dataset.mi);
   });
   $("scoreSheet").classList.add("on");
 }
@@ -1517,13 +1495,15 @@ function saveScoreAndNext() {
   round.mateScores = round.mateScores || {};
   (round.mates || []).forEach((m, i) => {
     const el = $("mv" + i);
-    if (el) {
+    // save only if edited here, or the player has no score yet (keeper-of-the-card
+    // default); an untouched stepper never overwrites a mate's own entry
+    if (el && (ssDirty.has(i) || !ssHad[i])) {
       const v = +el.textContent;
       (round.mateScores[m.id] = round.mateScores[m.id] || {})[round.hole] = v;
       queueScore(m.id, round.hole, v, null);
     }
   });
-  queueScore("me", round.hole, +$("ssScore").value, +$("ssPutts").value);
+  queueScore(selfId(), round.hole, +$("ssScore").value, +$("ssPutts").value);
   $("scoreSheet").classList.remove("on");
   saveCur();
   if (round.hole >= 18) { finishRound(); return; }
@@ -2394,17 +2374,12 @@ $("setupBack").onclick = () => { renderHome(); show("home"); };
 $("btnTeeOff").onclick = teeOff;
 $("addPlayer").onclick = addPlayerPrompt;
 $("tglMp").onclick = () => { setupMp = !setupMp; renderSetup(); };
-$("boardBack").onclick = () => { if (round) show("play"); else if (joinSess) show("entryScr"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
+$("boardBack").onclick = () => { if (round) show("play"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
 $("boardCard").onclick = () => { const r = round || viewRound; if (r) openCard(r, !round); };
+$("btnBoard").onclick = openBoard;
 $("btnJoin").onclick = () => { if (!syncEnabled()) { alert("Sharing isn't switched on in this build yet."); return; } $("joinPick").innerHTML = ""; show("joinScr"); };
 $("joinBack").onclick = () => { renderHome(); show("home"); };
 $("joinBtn2").onclick = findRound;
-$("entryLeave").onclick = () => {
-  if (!confirm("Leave this round? Your synced scores stay on the board.")) return;
-  joinSess = null; saveJoin();
-  renderHome(); show("home");
-};
-$("entryBoard").onclick = openBoard;
 $("btnResume").onclick = resumeRound;
 $("btnHit").onclick = hit;
 $("btnPutt").onclick = addPutt;
@@ -2438,7 +2413,6 @@ $("bagEditBtn").onclick = () => { bagEditMode = !bagEditMode; $("bagEditBtn").te
 
 renderHome();
 if (loadCur()) resumeRound();
-else if (joinSess) { openEntry(); pollBoardRemote(); }
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>
