@@ -115,8 +115,6 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 #toast div { display:inline-block; background:rgba(22,22,24,.7); border:.5px solid rgba(255,255,255,.18); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; padding:5px 12px; border-radius:12px; }
 
 /* plays-like */
-#plBanner { display:none; position:absolute; top:0; left:0; right:0; z-index:6; background:#ffcf6b; color:#0b1206; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; font-weight:700; letter-spacing:1px; text-align:center; padding:calc(env(safe-area-inset-top) + 3px) 0 4px; }
-#plBanner.on { display:block; }
 #plays { display:none; margin-top:5px; align-items:baseline; gap:8px; }
 #plays.on { display:flex; }
 #playsNum { font-size:20px; font-weight:700; color:#c9ccc2; }
@@ -440,7 +438,6 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 <!-- ============ PLAY ============ -->
 <div id="play" class="screen">
   <div id="mapWrap"></div>
-  <div id="plBanner">PLAYS-LIKE ON — NOT COMPETITION LEGAL</div>
   <div class="scrimTop"></div>
   <div class="scrimBot"></div>
   <div id="gpsBadge" class="gps-bad">▲ NO GPS</div>
@@ -493,7 +490,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
       <button id="btnHit"><span>＋</span>Track shot</button>
     </div>
     <div id="quick">
-      <button id="btnPutt">＋ Putt</button>
+      <button id="btnPrev">◀ Prev</button>
       <button id="btnUndo">Undo</button>
       <button id="btnBoard">🏆</button>
       <button id="btnNext">Next ▶</button>
@@ -543,7 +540,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div class="setRow">
     <div>
       <div class="setLbl">Plays-like distance</div>
-      <div class="setSub">NOT LEGAL IN COMPETITION — RULE 4.3a</div>
+      <div class="setSub">ELEVATION · WIND · TEMP ADJUSTED NUMBER</div>
     </div>
     <button class="tgl" id="tglPL">OFF</button>
   </div>
@@ -901,12 +898,15 @@ function hav(aLat, aLon, bLat, bLon) {
 
 // ---------- settings ----------
 function loadSet() {
-  const def = { playsLike: false, windSource: "manual", alpha: 0.14, showBreakdown: true,
+  const def = { playsLike: true, windSource: "manual", alpha: 0.14, showBreakdown: true,
                 manual: { fromDeg: 0, kmh: 0, tempC: 21 } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(LS_SET)) || {}); } catch { return def; }
 }
 let SET = loadSet();
 function saveSet() { localStorage.setItem(LS_SET, JSON.stringify(SET)); }
+// one-time migration: plays-like became a standard feature (no comp gate) —
+// switch it on once for installs that predate the change
+if (!SET.plStd) { SET.plStd = 1; SET.playsLike = true; saveSet(); }
 
 // ---------- plays-like (ADDENDUM A: display-only, never touches a shot record) ----------
 // Tour-average descent angles (degrees). Tunable starting values — refit from
@@ -977,7 +977,7 @@ function playsLikeCalc(dist, dh, headMs, tempC, club) {
   return wind * tempFactor(tempC) * altFactor();
 }
 
-function plActive() { return SET.playsLike && round && !round.compLegal; }
+function plActive() { return SET.playsLike && !!round; }
 function activeCond() {
   if (SET.windSource === "off") return { source: "off", windMs: 0, windFromDeg: 0, tempC: SET.manual.tempC, stale: false };
   if (SET.windSource === "manual")
@@ -1394,11 +1394,6 @@ function startRound(cfg) {
   cfg = cfg || {};
   round = { id: Date.now(), course: COURSE.name, startTs: Date.now(), hole: 1, shots: [],
             myHcp: cfg.myHcp || 0, mates: cfg.mates || [], matchplay: !!cfg.matchplay, mateScores: {} };
-  if (SET.playsLike) {
-    // Rule 4.3a: measuring elevation is not allowed in competition
-    if (confirm("Competition round?\n\nOK = YES — plays-like is disabled for this round (Rule 4.3a).\nCancel = casual round.")) round.compLegal = true;
-  }
-  round.playsLikeUsed = SET.playsLike && !round.compLegal;
   saveCur();
   snapshotConditions();
   if (SET.windSource === "api" && SET.playsLike) fetchWeather();
@@ -1440,7 +1435,6 @@ function hit() {
   else toast(clubName(selClub).toUpperCase() + " TRACKED");
   render();
 }
-function addPutt() { appendShot("PUTT", false, false); toast("PUTT " + putts(round.hole).length); render(); }
 function undo() {
   const last = round.shots[round.shots.length - 1];
   if (!last) return;
@@ -1466,7 +1460,7 @@ function openScoreSheet() {
   $("ssHole").textContent = "Hole " + round.hole;
   $("ssPar").textContent = "PAR " + hole.par;
   $("ssScore").value = d ? d.score : (tracked || hole.par);
-  $("ssPutts").value = d ? d.putts : putts(round.hole).length;
+  $("ssPutts").value = d ? d.putts : (putts(round.hole).length || 2);
   $("ssScoreVal").textContent = $("ssScore").value;
   $("ssPuttsVal").textContent = $("ssPutts").value;
   // mates: stepper per player, prefilled with their known score (self-entered
@@ -2128,7 +2122,7 @@ function renderRounds() {
     return (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
       '<div class="rndRow" data-ri="' + (rounds.length - 1 - i) + '"><div><div class="rd">' + (r.course || "Round") + '</div>' +
       '<div class="rm">' + d.getDate() + " " + ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getMonth()] + " " + d.getFullYear() +
-      " · " + t.playedHoles + " HOLES" + (r.playsLikeUsed ? " · PL" : "") + (r.compLegal ? " · COMP" : "") + '</div></div>' +
+      " · " + t.playedHoles + " HOLES" + '</div></div>' +
       '<div class="rs num">' + (t.gross || "–") + '</div></div>';
   }).join("");
   document.querySelectorAll("#rndList .rndRow").forEach(el => el.onclick = () => {
@@ -2252,10 +2246,7 @@ function render() {
     $("heroSub").textContent = "TO CENTER · NO GPS FIX";
     $("plays").classList.remove("on");
   }
-  $("plBanner").classList.toggle("on", plActive());
 
-  const p = putts(round.hole).length;
-  $("btnPutt").textContent = "＋ Putt" + (p ? " " + p : "");
   $("btnNext").textContent = round.hole >= 18 ? "Finish ⚑" : "Next ▶";
 
   if (!gesturing) { drawMap(); applyView(); }
@@ -2336,15 +2327,13 @@ function renderSettings() {
 function openSettings() { renderSettings(); $("setSheet").classList.add("on"); }
 $("gearBtn").onclick = openSettings;
 $("btnSettingsCard").onclick = openSettings;
-$("plBanner").onclick = openSettings;
 $("plays").onclick = openSettings;
 $("setClose").onclick = () => { $("setSheet").classList.remove("on"); render(); };
 $("tglPL").onclick = () => {
   SET.playsLike = !SET.playsLike;
   saveSet();
   if (round) {
-    if (SET.playsLike && round.compLegal) alert("Competition round — plays-like stays off until the round ends.");
-    if (SET.playsLike && !round.compLegal) { round.playsLikeUsed = true; saveCur(); snapshotConditions(); }
+    if (SET.playsLike) snapshotConditions();
   }
   renderSettings(); render();
 };
@@ -2382,7 +2371,7 @@ $("joinBack").onclick = () => { renderHome(); show("home"); };
 $("joinBtn2").onclick = findRound;
 $("btnResume").onclick = resumeRound;
 $("btnHit").onclick = hit;
-$("btnPutt").onclick = addPutt;
+$("btnPrev").onclick = () => jumpHole(-1);
 $("btnUndo").onclick = undo;
 $("btnNext").onclick = openScoreSheet;
 $("holePrev").onclick = () => jumpHole(-1);
