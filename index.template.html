@@ -282,6 +282,9 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .heRow .hn { font-size:15px; font-weight:700; width:64px; }
 .heRow .hn small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; font-weight:400; letter-spacing:1px; }
 #ssMates { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
+.forChip { padding:8px 14px; border-radius:11px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); font-size:13px; font-weight:600; color:#fff; }
+.forChip.on { background:rgba(255,255,255,.85); color:#000; border-color:transparent; }
+#trackLive { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#c9ccc2; letter-spacing:1px; display:none; }
 .mateRow { display:flex; align-items:center; justify-content:space-between; }
 .mateRow .mn2 { font-size:15px; font-weight:600; }
 .mateRow .mateCtl { display:flex; align-items:center; gap:10px; }
@@ -495,7 +498,10 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
         <div id="heroSub">TO CENTER</div>
         <div id="plays" class="num"><span id="playsNum">plays –</span><span id="playsParts"></span></div>
       </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
       <button id="btnHit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>Track</button>
+      <div id="trackLive"></div>
+      </div>
     </div>
     <div id="quick">
       <button id="btnPrev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>Prev</button>
@@ -538,12 +544,9 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <input type="range" class="slider" id="ssScore" min="1" max="12" step="1">
   <div class="slRow"><span class="slLbl">PUTTS</span><span class="slVal num" id="ssPuttsVal">2</span></div>
   <input type="range" class="slider" id="ssPutts" min="0" max="6" step="1">
-  <div class="setRow" id="ssOthersRow" style="display:none;margin-bottom:14px;">
-    <div>
-      <div class="setLbl" style="font-size:14px;">Score for others</div>
-      <div class="setSub">OFF = EVERYONE ENTERS THEIR OWN</div>
-    </div>
-    <button class="tgl" id="ssOthersTgl">OFF</button>
+  <div id="ssForRow" style="display:none;margin-bottom:14px;">
+    <div class="setSub" style="margin-bottom:8px;">SCORING FOR · TAP TO ADD OR DROP</div>
+    <div id="ssForChips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
   </div>
   <div id="ssMates"></div>
   <button id="ssSave">Save &amp; next hole ▸</button>
@@ -552,6 +555,13 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 <!-- ============ SETTINGS ============ -->
 <div id="setSheet">
   <h3>Settings</h3>
+  <div class="setRow">
+    <div>
+      <div class="setLbl">Your name</div>
+      <div class="setSub">SHOWN ON THE SHARED LEADERBOARD</div>
+    </div>
+    <button class="tgl" id="btnName" style="min-width:auto;padding:9px 16px;">Set</button>
+  </div>
   <div class="setRow">
     <div>
       <div class="setLbl">Plays-like distance</div>
@@ -642,9 +652,15 @@ function carryStats() {
     for (const s of r.shots) { (byHole[s.hole] = byHole[s.hole] || []).push(s); }
     for (const hs of Object.values(byHole)) {
       const sw = hs.filter(s => s.club !== "PUTT" && s.lat != null);
-      for (let i = 0; i < sw.length - 1; i++) {
-        const d = hav(sw[i].lat, sw[i].lon, sw[i+1].lat, sw[i+1].lon);
-        if (d > 15 && d < 350) (segs[sw[i].club] = segs[sw[i].club] || []).push(d);
+      for (let i = 0; i < sw.length; i++) {
+        // measured end (explicit Track->Stop) beats inference from the next shot
+        if (sw[i].endLat != null) {
+          const d = hav(sw[i].lat, sw[i].lon, sw[i].endLat, sw[i].endLon);
+          if (d > 15 && d < 350) (segs[sw[i].club] = segs[sw[i].club] || []).push(d);
+        } else if (i < sw.length - 1) {
+          const d = hav(sw[i].lat, sw[i].lon, sw[i+1].lat, sw[i+1].lon);
+          if (d > 15 && d < 350) (segs[sw[i].club] = segs[sw[i].club] || []).push(d);
+        }
       }
     }
   };
@@ -1083,7 +1099,16 @@ function mergeRemote(b) {
     else if (m.hcp !== p.hcp || m.name !== p.name) { m.hcp = p.hcp; m.name = p.name; changed = true; }
   }
   for (const s of b.scores) {
-    if (s.playerId === self) continue;
+    if (s.playerId === self) {
+      // inherit scores a keeper entered for me — only where I have no entry
+      // of my own; my local card always wins once I touch a hole
+      round.holeScores = round.holeScores || {};
+      if (!round.holeScores[s.hole]) {
+        round.holeScores[s.hole] = { score: s.gross, putts: s.putts != null ? s.putts : null, ts: 0, inherited: true };
+        changed = true;
+      }
+      continue;
+    }
     round.mateScores = round.mateScores || {};
     if ((round.mateScores[s.playerId] || {})[s.hole] !== s.gross) {
       (round.mateScores[s.playerId] = round.mateScores[s.playerId] || {})[s.hole] = s.gross;
@@ -1291,28 +1316,61 @@ function appendShot(club, useFix, estimated) {
   return shot;
 }
 
+let trackSess = null; // {idx, ts, lat, lon} — live shot being measured
 function hit() {
+  if (trackSess) stopTracking(true); // arriving at the ball ends the last shot
   if (!selClub) { openPop("select"); return; }
   const shot = appendShot(selClub, true, false);
   if (shot.lat == null) toast(clubName(selClub).toUpperCase() + " · NO POSITION");
-  else toast(clubName(selClub).toUpperCase() + " TRACKED");
+  else {
+    trackSess = { idx: round.shots.length - 1, ts: shot.ts, lat: shot.lat, lon: shot.lon };
+    toast(clubName(selClub).toUpperCase() + " TRACKING");
+  }
   render();
+}
+// records the shot's END position (raw observation; carry is derived from it)
+function stopTracking(record) {
+  if (!trackSess) return;
+  const shot = round && round.shots[trackSess.idx];
+  if (record && shot && shot.ts === trackSess.ts && fixFresh()) {
+    const d = hav(trackSess.lat, trackSess.lon, lastFix.lat, lastFix.lon);
+    if (d > 5) {
+      shot.endLat = lastFix.lat; shot.endLon = lastFix.lon;
+      shot.endAcc = lastFix.accuracy; shot.endTs = Date.now();
+      saveCur();
+      toast(clubName(shot.club).toUpperCase() + " · " + Math.round(d) + " M");
+    }
+  }
+  trackSess = null;
+  render();
+}
+function trackToggle() {
+  if (trackSess) stopTracking(true);
+  else hit();
 }
 function undo() {
   const last = round.shots[round.shots.length - 1];
   if (!last) return;
   if (!confirm("Remove last: " + clubName(last.club) + " (hole " + last.hole + ")?")) return;
+  if (trackSess && trackSess.idx === round.shots.length - 1) trackSess = null;
   round.shots.pop();
   saveCur(); render();
 }
 // chevrons: free hole navigation, no scoring prompt
 function jumpHole(dir) {
+  trackSess = null;
   const n = round.hole + dir;
   if (n < 1 || n > 18) return;
   round.hole = n;
   target = null;
   resetView();
   saveCur(); render();
+}
+function scoringForIds() {
+  if (!round) return [];
+  if (Array.isArray(round.scoringFor)) return round.scoringFor;
+  if (round.scoreOthers) return (round.mates || []).map(m => m.id); // legacy toggle
+  return [];
 }
 // "Next" opens the score-entry sheet prefilled from tracked shots
 let ssDirty = new Set(), ssHad = {};
@@ -1326,41 +1384,48 @@ function openScoreSheet() {
   $("ssPutts").value = d ? d.putts : (putts(round.hole).length || 2);
   $("ssScoreVal").textContent = $("ssScore").value;
   $("ssPuttsVal").textContent = $("ssPutts").value;
-  // Everyone scores THEMSELVES by default — mate rows only exist when the
-  // per-round "Score for others" toggle is on (keeper-of-the-card mode).
+  // Everyone scores THEMSELVES by default. The chips pick exactly WHO ELSE
+  // this phone keeps the card for — add or drop players at any time.
   ssDirty = new Set();
   ssHad = {};
-  const hasMates = (round.mates || []).length > 0;
-  $("ssOthersRow").style.display = hasMates ? "flex" : "none";
-  $("ssOthersTgl").textContent = round.scoreOthers ? "ON" : "OFF";
-  $("ssOthersTgl").classList.toggle("on", !!round.scoreOthers);
-  $("ssOthersTgl").onclick = () => { round.scoreOthers = !round.scoreOthers; saveCur(); openScoreSheet(); };
-  if (round.scoreOthers && hasMates) {
-    $("ssMates").innerHTML = round.mates.map((m, i) => {
-      const v = mateScore(round, m.id, round.hole);
-      ssHad[i] = v != null;
-      return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
-        '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
-        '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
-        '<button data-mi="' + i + '" data-d="1">＋</button></div></div>';
-    }).join("");
-    document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
-      const el = $("mv" + b.dataset.mi);
-      el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
-      ssDirty.add(+b.dataset.mi);
-    });
-  } else {
-    $("ssMates").innerHTML = "";
-  }
+  const mates = round.mates || [];
+  const selFor = new Set(scoringForIds());
+  $("ssForRow").style.display = mates.length ? "block" : "none";
+  $("ssForChips").innerHTML = mates.map((m, i) =>
+    '<button class="forChip' + (selFor.has(m.id) ? ' on' : '') + '" data-fc="' + i + '">' + m.name + '</button>').join("");
+  document.querySelectorAll("#ssForChips .forChip").forEach(b => b.onclick = () => {
+    const id = mates[+b.dataset.fc].id;
+    const cur = new Set(scoringForIds());
+    cur.has(id) ? cur.delete(id) : cur.add(id);
+    round.scoringFor = [...cur];
+    delete round.scoreOthers;
+    saveCur(); openScoreSheet();
+  });
+  const scored = mates.map((m, i) => ({ m, i })).filter(x => selFor.has(x.m.id));
+  $("ssMates").innerHTML = scored.map(({ m, i }) => {
+    const v = mateScore(round, m.id, round.hole);
+    ssHad[i] = v != null;
+    return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
+      '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
+      '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
+      '<button data-mi="' + i + '" data-d="1">＋</button></div></div>';
+  }).join("");
+  document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
+    const el = $("mv" + b.dataset.mi);
+    el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
+    ssDirty.add(+b.dataset.mi);
+  });
   $("scoreSheet").classList.add("on");
 }
 function saveScoreAndNext() {
   round.holeScores = round.holeScores || {};
   round.holeScores[round.hole] = { score: +$("ssScore").value, putts: +$("ssPutts").value, ts: Date.now() };
   round.mateScores = round.mateScores || {};
-  // mate rows save ONLY in "Score for others" mode: edited rows always, untouched
-  // rows just when that player has no score yet. Default mode touches nobody else.
-  if (round.scoreOthers) (round.mates || []).forEach((m, i) => {
+  // only players this phone is scoring for: edited rows always, untouched rows
+  // just when that player has no score yet. Nobody else is ever written.
+  const selFor2 = new Set(scoringForIds());
+  (round.mates || []).forEach((m, i) => {
+    if (!selFor2.has(m.id)) return;
     const el = $("mv" + i);
     if (el && (ssDirty.has(i) || !ssHad[i])) {
       const v = +el.textContent;
@@ -1371,6 +1436,7 @@ function saveScoreAndNext() {
   });
   queueScore(selfId(), round.hole, +$("ssScore").value, +$("ssPutts").value);
   $("scoreSheet").classList.remove("on");
+  trackSess = null;
   saveCur();
   if (round.hole >= 18) { finishRound(); return; }
   round.hole++;
@@ -1921,16 +1987,26 @@ $("btnSumMore").onclick = () => { if (sumRound) openCard(sumRound, true); };
 
 // ---------- sub-screens ----------
 let bagEditMode = false;
+let bagOpen = null;
 function renderBag() {
   const stats = carryStats();
-  $("bagNote").textContent = BAG.length + " CLUBS · CHANGES SYNC EVERYWHERE";
+  $("bagNote").textContent = BAG.length + " CLUBS · TAP ONE FOR ITS SHOT PROFILE";
   $("bagList").innerHTML = bagClubs().map((c, i) => {
     const st = stats[c.id];
+    const detail = bagOpen === c.id ?
+      '<div class="mono" style="padding:0 14px 10px 52px;font-size:10px;color:#8b917f;letter-spacing:.5px;">' +
+      (st ? 'MIN ' + Math.round(st.min) + ' · AVG ' + Math.round(st.avg) + ' · MAX ' + Math.round(st.max) + ' M · ' + st.count + ' TRACKED SHOTS · LIVE' :
+            'NO TRACKED SHOTS YET · PRESET ' + carryOf(c.id, stats) + ' M') + '</div>' : '';
     return (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
-      '<div class="bagRow"><div class="ba">' + c.id + '</div><div class="bn">' + c.name + '</div>' +
+      '<div class="bagRow" data-bo="' + c.id + '"><div class="ba">' + c.id + '</div><div class="bn">' + c.name + '</div>' +
       '<div class="bs num">' + carryOf(c.id, stats) + ' m · ' + (st ? st.count : 0) + '</div>' +
-      '<button class="brm" data-rm="' + c.id + '">−</button></div>';
+      '<button class="brm" data-rm="' + c.id + '">−</button></div>' + detail;
   }).join("");
+  document.querySelectorAll("#bagList .bagRow").forEach(el => el.onclick = e => {
+    if (e.target.dataset && e.target.dataset.rm) return;
+    bagOpen = bagOpen === el.dataset.bo ? null : el.dataset.bo;
+    renderBag();
+  });
   $("bagList").className = "glassList glass" + (bagEditMode ? " bagEdit" : "");
   document.querySelectorAll("#bagList .brm").forEach(b => b.onclick = () => {
     if (BAG.length <= 1) return;
@@ -2120,6 +2196,16 @@ function render() {
   }
 
   $("btnNext").textContent = round.hole >= 18 ? "Finish ⚑" : "Next ▶";
+  const tl = $("trackLive");
+  if (trackSess) {
+    $("btnHit").innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>Tracking';
+    const live = fixFresh() ? Math.round(hav(trackSess.lat, trackSess.lon, lastFix.lat, lastFix.lon)) : null;
+    tl.textContent = live != null ? "● " + live + " M" : "● NO FIX";
+    tl.style.display = "block";
+  } else {
+    $("btnHit").innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>Track';
+    tl.style.display = "none";
+  }
 
   if (!gesturing) { drawMap(); applyView(); }
 }
@@ -2176,6 +2262,11 @@ function drawDial() {
   };
 }
 function renderSettings() {
+  $("btnName").textContent = SET.myName || "Set";
+  $("btnName").onclick = () => {
+    const n = (prompt("Your name on the shared leaderboard?", SET.myName || "") || "").trim();
+    if (n) { SET.myName = n; saveSet(); renderSettings(); render(); }
+  };
   $("tglPL").textContent = SET.playsLike ? "ON" : "OFF";
   $("tglPL").classList.toggle("on", SET.playsLike);
   $("plOpts").style.display = SET.playsLike ? "flex" : "none";
@@ -2253,7 +2344,7 @@ $("btnJoin").onclick = () => { if (!syncEnabled()) { alert("Sharing isn't switch
 $("joinBack").onclick = () => { renderHome(); show("home"); };
 $("joinBtn2").onclick = findRound;
 $("btnResume").onclick = resumeRound;
-$("btnHit").onclick = hit;
+$("btnHit").onclick = trackToggle;
 $("btnPrev").onclick = () => jumpHole(-1);
 $("btnUndo").onclick = undo;
 $("btnNext").onclick = openScoreSheet;
