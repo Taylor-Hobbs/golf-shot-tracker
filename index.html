@@ -1209,7 +1209,7 @@ function addPlayerPrompt() {
 }
 
 // ---------- cloud sync (Railway API; additive — solo/offline untouched) ----------
-const API_BASE = "";
+const API_BASE = "https://golf-tracker-api-production.up.railway.app";
 const LS_JOIN = "golf_join_v1";
 let joinSess = (() => { try { return JSON.parse(localStorage.getItem(LS_JOIN)); } catch { return null; } })();
 function saveJoin() { joinSess ? localStorage.setItem(LS_JOIN, JSON.stringify(joinSess)) : localStorage.removeItem(LS_JOIN); }
