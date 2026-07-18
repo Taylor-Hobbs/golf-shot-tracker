@@ -268,6 +268,17 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .bHead { display:grid; grid-template-columns:1fr 44px 52px 52px; gap:6px; padding:6px 14px 4px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; letter-spacing:1px; }
 .bHead.mp4 { grid-template-columns:1fr 44px 52px 52px 44px; }
 .bHead div { text-align:right; } .bHead div:first-child { text-align:left; }
+#btnJoin { width:100%; text-align:center; color:#9aa08f; font-size:13px; font-weight:600; padding:10px 0 2px; }
+.txtIn { width:100%; background:rgba(120,120,128,.2); border:.5px solid rgba(255,255,255,.14); border-radius:13px; padding:13px 14px; color:#fff; font-size:24px; font-weight:700; text-align:center; letter-spacing:8px; font-family:'JetBrains Mono',ui-monospace,monospace; text-transform:uppercase; -webkit-user-select:text; user-select:text; }
+.txtIn.name { letter-spacing:0; font-size:17px; font-family:inherit; font-weight:600; }
+#joinBtn2, .bigGlassBtn { width:100%; border-radius:16px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:17px; padding:15px 0; margin-top:12px; }
+#syncRow { display:flex; align-items:center; justify-content:space-between; border-radius:14px; padding:11px 14px; margin-bottom:10px; }
+#syncRow .scode { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:20px; font-weight:700; letter-spacing:4px; }
+#syncRow .sinfo { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; margin-top:2px; letter-spacing:.5px; }
+#syncRow button { border-radius:11px; background:rgba(255,255,255,.14); font-size:12px; font-weight:700; padding:9px 14px; }
+.heRow { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; }
+.heRow .hn { font-size:15px; font-weight:700; width:64px; }
+.heRow .hn small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; font-weight:400; letter-spacing:1px; }
 #ssMates { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
 .mateRow { display:flex; align-items:center; justify-content:space-between; }
 .mateRow .mn2 { font-size:15px; font-weight:600; }
@@ -319,6 +330,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   </div>
   <div id="homeCta">
     <button id="btnStart">Start round ▸</button>
+    <button id="btnJoin">Join a mate's round ›</button>
   </div>
   <div id="tabBar">
     <button class="tab on" data-tab="home"><span>⛳</span>Play</button>
@@ -390,7 +402,28 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div class="safeTop"></div>
   <div class="navRow"><button class="navBack" id="boardBack">‹ Map</button><div class="navTitle">Scoreboard</div><button class="navAct" id="boardCard">Card</button></div>
   <div class="subNote" id="boardNote">LIVE · NETT = GROSS − DAILY HCP BY STROKE INDEX</div>
+  <div style="padding:0 16px;"><div id="syncRow" class="glass" style="display:none;"></div></div>
   <div id="boardBody"></div>
+</div>
+
+<!-- ============ JOIN A ROUND ============ -->
+<div id="joinScr" class="screen">
+  <div class="safeTop"></div>
+  <div class="navRow"><button class="navBack" id="joinBack">‹ Home</button><div class="navTitle">Join round</div><div class="navAct"></div></div>
+  <div class="subNote">GET THE 5-LETTER CODE FROM WHOEVER STARTED IT</div>
+  <div class="listWrap" id="joinBody">
+    <input class="txtIn" id="joinCode" maxlength="5" autocomplete="off" placeholder="CODE">
+    <button id="joinBtn2">Find round</button>
+    <div id="joinPick" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- ============ MATE SCORE ENTRY ============ -->
+<div id="entryScr" class="screen">
+  <div class="safeTop"></div>
+  <div class="navRow"><button class="navBack" id="entryLeave">Leave</button><div class="navTitle" id="entryTitle">Scoring</div><button class="navAct" id="entryBoard">Board</button></div>
+  <div class="subNote" id="entryNote"></div>
+  <div class="listWrap"><div id="entryList" class="glassList glass"></div></div>
 </div>
 
 <!-- ============ ROUND SUMMARY ============ -->
@@ -854,13 +887,14 @@ function strokesRcvd(hcp, holeNum) {
 }
 // mate score lookup; "me" flows through scoreOf/holePlayed as always
 function mateScore(r, id, h) { return ((r.mateScores || {})[id] || {})[h]; }
-function boardRows(r) {
+// core leaderboard math over any (entrants, score-lookup) pair — used by both
+// the local round and the remote board a joiner sees
+function computeBoard(entrants, getScore, matchplay) {
   const rows = [];
-  const entrants = [{ id: "me", name: "You", hcp: r.myHcp || 0 }, ...(r.mates || [])];
   for (const p of entrants) {
     let gross = 0, nett = 0, parPlayed = 0, thru = 0;
     for (const hole of COURSE.holes) {
-      const sc = p.id === "me" ? (holePlayed(r, hole.num) ? scoreOf(r, hole.num) : null) : mateScore(r, p.id, hole.num);
+      const sc = getScore(p.id, hole.num);
       if (sc == null) continue;
       gross += sc;
       nett += sc - strokesRcvd(p.hcp, hole.num);
@@ -869,10 +903,10 @@ function boardRows(r) {
     }
     rows.push({ id: p.id, name: p.name, hcp: p.hcp, gross, nett, thru, grossDiff: gross - parPlayed, nettDiff: nett - parPlayed, mp: 0 });
   }
-  if (r.matchplay && entrants.length > 1) {
+  if (matchplay && entrants.length > 1) {
     for (const hole of COURSE.holes) {
       const netts = entrants.map(p => {
-        const sc = p.id === "me" ? (holePlayed(r, hole.num) ? scoreOf(r, hole.num) : null) : mateScore(r, p.id, hole.num);
+        const sc = getScore(p.id, hole.num);
         return sc == null ? null : sc - strokesRcvd(p.hcp, hole.num);
       });
       if (netts.some(n => n == null)) continue; // hole only counts when everyone is in
@@ -881,8 +915,19 @@ function boardRows(r) {
       netts.forEach((n, i) => { if (n === best) rows[i].mp += 1 / winners; });
     }
   }
-  rows.sort((a, b) => (r.matchplay ? b.mp - a.mp : 0) || a.nettDiff - b.nettDiff || a.grossDiff - b.grossDiff);
+  rows.sort((a, b) => (matchplay ? b.mp - a.mp : 0) || a.nettDiff - b.nettDiff || a.grossDiff - b.grossDiff);
   return rows;
+}
+function boardRows(r) {
+  const entrants = [{ id: "me", name: SET.myName || "You", hcp: r.myHcp || 0 }, ...(r.mates || [])];
+  return computeBoard(entrants,
+    (id, h) => id === "me" ? (holePlayed(r, h) ? scoreOf(r, h) : null) : (mateScore(r, id, h) != null ? mateScore(r, id, h) : null),
+    r.matchplay);
+}
+function boardRowsRemote(b) {
+  const map = {};
+  for (const s of b.scores) (map[s.playerId] = map[s.playerId] || {})[s.hole] = s.gross;
+  return computeBoard(b.players, (id, h) => (map[id] || {})[h] != null ? map[id][h] : null, b.matchplay);
 }
 function fmtDiff(d, thru) { return thru ? (d === 0 ? "E" : (d > 0 ? "+" + d : String(d))) : "–"; }
 function multi(r) { return r && r.mates && r.mates.length > 0; }
@@ -938,6 +983,8 @@ function teeOff() {
   for (const m of mates) { const p = players.find(x => x.id === m.id); if (p) p.lastHcp = m.hcp; }
   savePlayers(players);
   startRound({ myHcp: me.hcp, mates, matchplay: setupMp && mates.length > 0 });
+  // share to the cloud while there's still car-park reception; harmless if offline
+  if (syncEnabled()) ensureSync().then(() => toast("ROUND CODE " + round.sync.code)).catch(() => {});
 }
 function addPlayerPrompt() {
   const name = (prompt("Player name?") || "").trim();
@@ -950,13 +997,174 @@ function addPlayerPrompt() {
   renderSetup();
 }
 
+// ---------- cloud sync (Railway API; additive — solo/offline untouched) ----------
+const API_BASE = "__API_BASE__";
+const LS_JOIN = "golf_join_v1";
+let joinSess = (() => { try { return JSON.parse(localStorage.getItem(LS_JOIN)); } catch { return null; } })();
+function saveJoin() { joinSess ? localStorage.setItem(LS_JOIN, JSON.stringify(joinSess)) : localStorage.removeItem(LS_JOIN); }
+let remoteBoard = null;
+function syncEnabled() { return !!API_BASE; }
+async function api(method, path, body) {
+  const res = await fetch(API_BASE + path, {
+    method, headers: { "Content-Type": "application/json" },
+    body: body != null ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error("api " + res.status);
+  return res.json();
+}
+async function ensureSync() {
+  if (!syncEnabled() || !round) return null;
+  if (round.sync) return round.sync;
+  if (!SET.myName) {
+    const n = (prompt("Your name on the shared scoreboard?") || "").trim();
+    if (n) { SET.myName = n; saveSet(); }
+  }
+  const players = [{ id: "me", name: SET.myName || "Me", hcp: round.myHcp || 0 }, ...(round.mates || [])];
+  const r = await api("POST", "/rounds", { course: round.course, matchplay: !!round.matchplay, players });
+  round.sync = { code: r.code, roundId: r.roundId };
+  saveCur();
+  return round.sync;
+}
+function queueScore(playerId, hole, gross, putts) {
+  if (!round || !syncEnabled()) return;
+  round.outbox = (round.outbox || []).filter(o => !(o.playerId === playerId && o.hole === hole));
+  round.outbox.push({ playerId, hole, gross, putts: putts == null ? null : putts, ts: Date.now() });
+  saveCur();
+  flushOutbox();
+}
+let flushing = false;
+async function flushOutbox() {
+  if (flushing || !syncEnabled() || !round || !round.sync || !(round.outbox || []).length) return;
+  flushing = true;
+  try {
+    const batch = round.outbox.slice(0, 100);
+    await api("POST", "/rounds/" + round.sync.code + "/scores", batch);
+    round.outbox = round.outbox.slice(batch.length);
+    saveCur();
+  } catch {} finally { flushing = false; }
+}
+// remote is authoritative for everyone except me; my scores flow out via the queue
+function mergeRemote(b) {
+  let changed = false;
+  for (const p of b.players) {
+    if (p.id === "me") continue;
+    const m = (round.mates || []).find(x => x.id === p.id);
+    if (!m) { round.mates = round.mates || []; round.mates.push({ id: p.id, name: p.name, hcp: p.hcp }); changed = true; }
+    else if (m.hcp !== p.hcp || m.name !== p.name) { m.hcp = p.hcp; m.name = p.name; changed = true; }
+  }
+  for (const s of b.scores) {
+    if (s.playerId === "me") continue;
+    round.mateScores = round.mateScores || {};
+    if ((round.mateScores[s.playerId] || {})[s.hole] !== s.gross) {
+      (round.mateScores[s.playerId] = round.mateScores[s.playerId] || {})[s.hole] = s.gross;
+      changed = true;
+    }
+  }
+  if (changed) saveCur();
+}
+async function pollBoardRemote() {
+  const code = round && round.sync ? round.sync.code : (joinSess ? joinSess.code : null);
+  if (!syncEnabled() || !code) return;
+  flushOutbox();
+  flushJoinOutbox();
+  try {
+    const b = await api("GET", "/rounds/" + code + "/board");
+    remoteBoard = Object.assign({}, b, { at: Date.now() });
+    if (round) mergeRemote(b);
+    if ($("boardScr").classList.contains("on")) renderBoard();
+  } catch {}
+}
+async function syncFinish(r) {
+  if (!syncEnabled() || !r.sync) return;
+  try {
+    if ((r.outbox || []).length) await api("POST", "/rounds/" + r.sync.code + "/scores", r.outbox);
+    await api("PUT", "/rounds/" + r.sync.code + "/shots", r);
+  } catch {}
+}
+
+// joiner (mate's phone): code -> pick name -> 18-hole entry list
+async function findRound() {
+  const code = ($("joinCode").value || "").trim().toUpperCase();
+  if (code.length !== 5) { alert("Codes are 5 characters."); return; }
+  let info;
+  try { info = await api("GET", "/rounds/" + code); }
+  catch { alert("No round found for " + code + " — check the code and your reception."); return; }
+  $("joinPick").innerHTML =
+    '<div class="sectLabel">WHO ARE YOU?</div><div class="glassList glass">' +
+    info.players.map((p, i) => (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
+      '<div class="playerRow" data-jp="' + i + '"><div class="pchk"></div><div class="pname">' + p.name + '</div>' +
+      '<div class="bhcp mono" style="color:#8b917f;font-size:10px;">HCP ' + p.hcp + '</div></div>').join("") +
+    '</div><input class="txtIn name" id="joinName" maxlength="40" placeholder="or type a new name" style="margin-top:12px;">' +
+    '<button class="bigGlassBtn" id="joinAsNew">Join as new player</button>';
+  document.querySelectorAll("#joinPick .playerRow").forEach(el => el.onclick = () => {
+    const p = info.players[+el.dataset.jp];
+    joinAs(code, info, p.id, p.name, p.hcp);
+  });
+  $("joinAsNew").onclick = async () => {
+    const name = ($("joinName").value || "").trim();
+    if (!name) { alert("Type a name first."); return; }
+    try {
+      const p = await api("POST", "/rounds/" + code + "/players", { name, hcp: 18 });
+      joinAs(code, info, p.id, p.name, p.hcp);
+    } catch { alert("Couldn't join — round may be full."); }
+  };
+}
+function joinAs(code, info, id, name, hcp) {
+  joinSess = { code, playerId: id, name, hcp, course: info.course, matchplay: info.matchplay, scores: {}, outbox: [] };
+  saveJoin();
+  openEntry();
+  pollBoardRemote();
+}
+function openEntry() {
+  $("entryTitle").textContent = joinSess.name;
+  $("entryNote").textContent = "CODE " + joinSess.code + " · TAP − / ＋ TO SCORE EACH HOLE";
+  $("entryList").innerHTML = COURSE.holes.map((h, i) => {
+    const v = joinSess.scores[h.num];
+    return (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
+      '<div class="heRow"><div class="hn num">H' + h.num + '<small>PAR ' + h.par + ' · IDX ' + INDEX[h.num] + '</small></div>' +
+      '<div class="mateCtl"><button data-eh="' + h.num + '" data-d="-1">−</button>' +
+      '<div class="mv num" id="ev' + h.num + '">' + (v != null ? v : "–") + '</div>' +
+      '<button data-eh="' + h.num + '" data-d="1">＋</button></div></div>';
+  }).join("");
+  document.querySelectorAll("#entryList button").forEach(b => b.onclick = () => {
+    const h = +b.dataset.eh;
+    const par = COURSE.holes.find(x => x.num === h).par;
+    const cur = joinSess.scores[h];
+    const v = cur == null ? par : Math.max(1, Math.min(12, cur + (+b.dataset.d)));
+    joinSess.scores[h] = v;
+    $("ev" + h).textContent = v;
+    joinSess.outbox = (joinSess.outbox || []).filter(o => o.hole !== h);
+    joinSess.outbox.push({ playerId: joinSess.playerId, hole: h, gross: v, putts: null, ts: Date.now() });
+    saveJoin();
+    flushJoinOutbox();
+  });
+  show("entryScr");
+}
+let jFlushing = false;
+async function flushJoinOutbox() {
+  if (jFlushing || !syncEnabled() || !joinSess || !(joinSess.outbox || []).length) return;
+  jFlushing = true;
+  try {
+    await api("POST", "/rounds/" + joinSess.code + "/scores", joinSess.outbox);
+    joinSess.outbox = [];
+    saveJoin();
+  } catch {} finally { jFlushing = false; }
+}
+
 // live scoreboard
-function openBoard() {
+function renderBoard() {
+  // joiner (or ended local round with a live remote) renders the server board;
+  // the owner renders local state, which pollBoardRemote keeps merged
+  const remoteMode = !round && (joinSess || (remoteBoard && !viewRound));
   const r = round || viewRound;
-  if (!r) return;
-  const rows = boardRows(r);
-  const mp = r.matchplay;
-  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − DAILY HCP BY STROKE INDEX";
+  let rows, mp;
+  if (remoteMode && remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
+  else if (r) { rows = boardRows(r); mp = r.matchplay; }
+  else if (remoteBoard) { rows = boardRowsRemote(remoteBoard); mp = remoteBoard.matchplay; }
+  else return;
+  const stale = remoteBoard ? Math.round((Date.now() - remoteBoard.at) / 1000) : null;
+  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − HCP BY STROKE INDEX" +
+    (stale != null && (joinSess || (round && round.sync)) ? " · SYNCED " + (stale < 5 ? "NOW" : stale + "S AGO") : "");
   let h = '<div class="bHead' + (mp ? ' mp4' : '') + '"><div>PLAYER</div><div>THRU</div><div>GROSS</div><div>NETT</div>' + (mp ? '<div>PTS</div>' : '') + '</div>';
   h += '<div class="glassList glass">' + rows.map((p, i) =>
     (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
@@ -968,9 +1176,37 @@ function openBoard() {
       (mp ? '<div class="bc num"><b>' + (Math.round(p.mp * 2) / 2) + '</b></div>' : '') +
     '</div>').join("") + '</div>';
   $("boardBody").innerHTML = h;
-  $("boardBack").textContent = round ? "‹ Map" : "‹ Back";
+  // share / sync row
+  const sr = $("syncRow");
+  if (round && syncEnabled()) {
+    if (round.sync) {
+      sr.innerHTML = '<div><div class="scode">' + round.sync.code + '</div><div class="sinfo">MATES: OPEN THE APP → JOIN A MATE\'S ROUND</div></div><button id="shareCode">Share</button>';
+      sr.style.display = "flex";
+      $("shareCode").onclick = () => exportText("Join my round on Shots — code " + round.sync.code + " at https://taylor-hobbs.github.io/golf-shot-tracker/", "Round code");
+    } else {
+      sr.innerHTML = '<div><div class="sinfo">NOT SHARED YET — NEEDS RECEPTION ONCE</div></div><button id="shareCode">Get code</button>';
+      sr.style.display = "flex";
+      $("shareCode").onclick = async () => {
+        try { await ensureSync(); flushOutbox(); pollBoardRemote(); renderBoard(); }
+        catch { toast("NO CONNECTION — TRY AGAIN WITH RECEPTION"); }
+      };
+    }
+  } else if (joinSess && !round) {
+    sr.innerHTML = '<div><div class="scode">' + joinSess.code + '</div><div class="sinfo">SCORING AS ' + joinSess.name.toUpperCase() + '</div></div>';
+    sr.style.display = "flex";
+  } else sr.style.display = "none";
+  $("boardBack").textContent = round ? "‹ Map" : (joinSess ? "‹ Scoring" : "‹ Back");
+  $("boardCard").style.display = (round || viewRound) ? "block" : "none";
+}
+function openBoard() {
+  renderBoard();
+  pollBoardRemote();
   show("boardScr");
 }
+setInterval(() => {
+  if (document.visibilityState !== "visible") return;
+  if ((round && round.sync) || joinSess) pollBoardRemote();
+}, 20000);
 
 function startRound(cfg) {
   cfg = cfg || {};
@@ -1070,8 +1306,13 @@ function saveScoreAndNext() {
   round.mateScores = round.mateScores || {};
   (round.mates || []).forEach((m, i) => {
     const el = $("mv" + i);
-    if (el) (round.mateScores[m.id] = round.mateScores[m.id] || {})[round.hole] = +el.textContent;
+    if (el) {
+      const v = +el.textContent;
+      (round.mateScores[m.id] = round.mateScores[m.id] || {})[round.hole] = v;
+      queueScore(m.id, round.hole, v, null);
+    }
   });
+  queueScore("me", round.hole, +$("ssScore").value, +$("ssPutts").value);
   $("scoreSheet").classList.remove("on");
   saveCur();
   if (round.hole >= 18) { finishRound(); return; }
@@ -1098,6 +1339,7 @@ function archive() {
   round = null;
   stopGPS();
   if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  syncFinish(finished); // final score flush + shot-log backup, fire-and-forget
   openSummary(finished);
 }
 
@@ -1941,8 +2183,17 @@ $("setupBack").onclick = () => { renderHome(); show("home"); };
 $("btnTeeOff").onclick = teeOff;
 $("addPlayer").onclick = addPlayerPrompt;
 $("tglMp").onclick = () => { setupMp = !setupMp; renderSetup(); };
-$("boardBack").onclick = () => { if (round) show("play"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
+$("boardBack").onclick = () => { if (round) show("play"); else if (joinSess) show("entryScr"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
 $("boardCard").onclick = () => { const r = round || viewRound; if (r) openCard(r, !round); };
+$("btnJoin").onclick = () => { if (!syncEnabled()) { alert("Sharing isn't switched on in this build yet."); return; } $("joinPick").innerHTML = ""; show("joinScr"); };
+$("joinBack").onclick = () => { renderHome(); show("home"); };
+$("joinBtn2").onclick = findRound;
+$("entryLeave").onclick = () => {
+  if (!confirm("Leave this round? Your synced scores stay on the board.")) return;
+  joinSess = null; saveJoin();
+  renderHome(); show("home");
+};
+$("entryBoard").onclick = openBoard;
 $("btnResume").onclick = resumeRound;
 $("btnHit").onclick = hit;
 $("btnPutt").onclick = addPutt;
@@ -1976,6 +2227,7 @@ $("bagEditBtn").onclick = () => { bagEditMode = !bagEditMode; $("bagEditBtn").te
 
 renderHome();
 if (loadCur()) resumeRound();
+else if (joinSess) { openEntry(); pollBoardRemote(); }
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>
