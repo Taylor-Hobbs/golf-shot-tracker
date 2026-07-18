@@ -243,6 +243,39 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
 .rndRow .rd { font-size:15px; font-weight:600; }
 .rndRow .rm { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:#8b917f; margin-top:2px; }
 .rndRow .rs { font-size:20px; font-weight:700; }
+
+/* ============ ROUND SETUP (players) ============ */
+.playerRow { display:flex; align-items:center; gap:12px; padding:10px 14px; }
+.playerRow .pchk { width:26px; height:26px; border-radius:50%; border:1.5px solid rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex:none; color:#fff; }
+.playerRow.sel .pchk { background:rgba(255,255,255,.85); color:#000; border-color:transparent; }
+.playerRow .pname { flex:1; font-size:16px; font-weight:600; }
+.playerRow .hcpCtl { display:none; align-items:center; gap:8px; }
+.playerRow.sel .hcpCtl { display:flex; }
+.hcpCtl button { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.09); font-size:17px; font-weight:700; }
+.hcpCtl .hv { min-width:56px; text-align:center; font-size:16px; font-weight:700; }
+.hcpCtl .hv small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; font-weight:400; letter-spacing:1px; }
+#addPlayer { border:.5px dashed rgba(255,255,255,.35); border-radius:12px; padding:11px 0; width:100%; font-size:14px; font-weight:600; margin-top:10px; }
+#setupCta { flex:none; padding:12px 18px calc(18px + env(safe-area-inset-bottom)); }
+#btnTeeOff { width:100%; border-radius:18px; background:rgba(255,255,255,.2); color:#fff; font-weight:700; font-size:20px; padding:18px 0; }
+
+/* ============ SCOREBOARD ============ */
+#boardBody { flex:1; overflow-y:auto; padding:0 16px calc(16px + env(safe-area-inset-bottom)); }
+.bRow { display:grid; grid-template-columns:1fr 44px 52px 52px; gap:6px; align-items:center; padding:11px 14px; }
+.bRow.mp4 { grid-template-columns:1fr 44px 52px 52px 44px; }
+.bRow .bp { font-size:15px; font-weight:600; }
+.bRow .bhcp { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; margin-top:2px; }
+.bRow .bc { text-align:right; font-variant-numeric:tabular-nums; }
+.bRow .bc b { font-size:17px; font-weight:700; }
+.bRow .bc small { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:8px; color:#8b917f; letter-spacing:.5px; }
+.bHead { display:grid; grid-template-columns:1fr 44px 52px 52px; gap:6px; padding:6px 14px 4px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; color:#8b917f; letter-spacing:1px; }
+.bHead.mp4 { grid-template-columns:1fr 44px 52px 52px 44px; }
+.bHead div { text-align:right; } .bHead div:first-child { text-align:left; }
+#ssMates { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
+.mateRow { display:flex; align-items:center; justify-content:space-between; }
+.mateRow .mn2 { font-size:15px; font-weight:600; }
+.mateRow .mateCtl { display:flex; align-items:center; gap:10px; }
+.mateCtl button { width:40px; height:40px; border-radius:11px; background:rgba(255,255,255,.09); font-size:18px; font-weight:700; }
+.mateCtl .mv { min-width:36px; text-align:center; font-size:22px; font-weight:700; }
 </style>
 </head>
 <body>
@@ -330,6 +363,36 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <div class="navRow"><button class="navBack" id="sgBack">‹ Home</button><div class="navTitle">Shots Gained</div><div class="navAct"></div></div>
   <div class="subNote">VS SCRATCH BASELINE · GPS-TRACKED HOLES ONLY</div>
   <div class="listWrap" id="sgBody"></div>
+</div>
+
+<!-- ============ ROUND SETUP ============ -->
+<div id="setupScr" class="screen">
+  <div class="safeTop"></div>
+  <div class="navRow"><button class="navBack" id="setupBack">‹ Home</button><div class="navTitle">New round</div><div class="navAct"></div></div>
+  <div class="subNote">PICK WHO'S PLAYING · SET TODAY'S HANDICAPS</div>
+  <div class="listWrap">
+    <div id="playerList" class="glassList glass"></div>
+    <button id="addPlayer">＋ Add player</button>
+    <div style="height:14px;"></div>
+    <div class="glass" style="border-radius:16px;padding:4px 14px;">
+      <div class="setRow" style="padding:10px 0;">
+        <div>
+          <div class="setLbl">Matchplay</div>
+          <div class="setSub">1 PT / HOLE TO BEST NETT · TIES SPLIT</div>
+        </div>
+        <button class="tgl" id="tglMp">OFF</button>
+      </div>
+    </div>
+  </div>
+  <div id="setupCta"><button id="btnTeeOff">Tee off ▸</button></div>
+</div>
+
+<!-- ============ SCOREBOARD ============ -->
+<div id="boardScr" class="screen">
+  <div class="safeTop"></div>
+  <div class="navRow"><button class="navBack" id="boardBack">‹ Map</button><div class="navTitle">Scoreboard</div><button class="navAct" id="boardCard">Card</button></div>
+  <div class="subNote" id="boardNote">LIVE · NETT = GROSS − DAILY HCP BY STROKE INDEX</div>
+  <div id="boardBody"></div>
 </div>
 
 <!-- ============ ROUND SUMMARY ============ -->
@@ -443,6 +506,7 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <input type="range" class="slider" id="ssScore" min="1" max="12" step="1">
   <div class="slRow"><span class="slLbl">PUTTS</span><span class="slVal num" id="ssPuttsVal">2</span></div>
   <input type="range" class="slider" id="ssPutts" min="0" max="6" step="1">
+  <div id="ssMates"></div>
   <button id="ssSave">Save &amp; next hole ▸</button>
 </div>
 
@@ -987,8 +1051,142 @@ function totals(r) {
   return { gross, parPlayed, playedHoles, diff: gross - parPlayed };
 }
 
-function startRound() {
-  round = { id: Date.now(), course: COURSE.name, startTs: Date.now(), hole: 1, shots: [] };
+// ---------- multiplayer: players, handicaps, nett, matchplay ----------
+// Stroke index per hole (Werribee Park card via 18Birdies; pars cross-checked
+// against the OSM data — all 18 match).
+const INDEX = { 1:16, 2:12, 3:17, 4:11, 5:2, 6:7, 7:5, 8:15, 9:9, 10:3, 11:14, 12:10, 13:13, 14:6, 15:18, 16:1, 17:8, 18:4 };
+const LS_PLAYERS = "golf_players_v1";
+function loadPlayers() { try { return JSON.parse(localStorage.getItem(LS_PLAYERS)) || []; } catch { return []; } }
+function savePlayers(p) { localStorage.setItem(LS_PLAYERS, JSON.stringify(p)); }
+
+function strokesRcvd(hcp, holeNum) {
+  const base = Math.floor(hcp / 18);
+  return base + (INDEX[holeNum] <= (hcp % 18) ? 1 : 0);
+}
+// mate score lookup; "me" flows through scoreOf/holePlayed as always
+function mateScore(r, id, h) { return ((r.mateScores || {})[id] || {})[h]; }
+function boardRows(r) {
+  const rows = [];
+  const entrants = [{ id: "me", name: "You", hcp: r.myHcp || 0 }, ...(r.mates || [])];
+  for (const p of entrants) {
+    let gross = 0, nett = 0, parPlayed = 0, thru = 0;
+    for (const hole of COURSE.holes) {
+      const sc = p.id === "me" ? (holePlayed(r, hole.num) ? scoreOf(r, hole.num) : null) : mateScore(r, p.id, hole.num);
+      if (sc == null) continue;
+      gross += sc;
+      nett += sc - strokesRcvd(p.hcp, hole.num);
+      parPlayed += hole.par;
+      thru++;
+    }
+    rows.push({ id: p.id, name: p.name, hcp: p.hcp, gross, nett, thru, grossDiff: gross - parPlayed, nettDiff: nett - parPlayed, mp: 0 });
+  }
+  if (r.matchplay && entrants.length > 1) {
+    for (const hole of COURSE.holes) {
+      const netts = entrants.map(p => {
+        const sc = p.id === "me" ? (holePlayed(r, hole.num) ? scoreOf(r, hole.num) : null) : mateScore(r, p.id, hole.num);
+        return sc == null ? null : sc - strokesRcvd(p.hcp, hole.num);
+      });
+      if (netts.some(n => n == null)) continue; // hole only counts when everyone is in
+      const best = Math.min(...netts);
+      const winners = netts.filter(n => n === best).length;
+      netts.forEach((n, i) => { if (n === best) rows[i].mp += 1 / winners; });
+    }
+  }
+  rows.sort((a, b) => (r.matchplay ? b.mp - a.mp : 0) || a.nettDiff - b.nettDiff || a.grossDiff - b.grossDiff);
+  return rows;
+}
+function fmtDiff(d, thru) { return thru ? (d === 0 ? "E" : (d > 0 ? "+" + d : String(d))) : "–"; }
+function multi(r) { return r && r.mates && r.mates.length > 0; }
+
+// setup screen state
+let setupSel = null; // [{id, name, hcp, on}], me first
+function openSetup() {
+  const players = loadPlayers();
+  setupSel = [{ id: "me", name: "You", hcp: (SET.myHcp != null ? SET.myHcp : 18), on: true },
+    ...players.map(p => ({ id: p.id, name: p.name, hcp: p.lastHcp != null ? p.lastHcp : 18, on: false }))];
+  renderSetup();
+  show("setupScr");
+}
+function renderSetup() {
+  $("playerList").innerHTML = setupSel.map((p, i) =>
+    (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
+    '<div class="playerRow' + (p.on ? ' sel' : '') + '" data-pi="' + i + '">' +
+      '<div class="pchk">' + (p.on ? '✓' : '') + '</div>' +
+      '<div class="pname">' + p.name + '</div>' +
+      '<div class="hcpCtl">' +
+        '<button data-h="-1" data-pi="' + i + '">−</button>' +
+        '<div class="hv num">' + p.hcp + '<small>HCP</small></div>' +
+        '<button data-h="1" data-pi="' + i + '">＋</button>' +
+      '</div>' +
+    '</div>').join("");
+  document.querySelectorAll("#playerList .playerRow").forEach(el => {
+    el.onclick = e => {
+      if (e.target.dataset.h) return;
+      const p = setupSel[+el.dataset.pi];
+      if (p.id === "me") return; // you always play
+      p.on = !p.on;
+      renderSetup();
+    };
+  });
+  document.querySelectorAll("#playerList .hcpCtl button").forEach(b => {
+    b.onclick = e => {
+      e.stopPropagation();
+      const p = setupSel[+b.dataset.pi];
+      p.hcp = Math.max(0, Math.min(54, p.hcp + (+b.dataset.h)));
+      renderSetup();
+    };
+  });
+  $("tglMp").textContent = setupMp ? "ON" : "OFF";
+  $("tglMp").classList.toggle("on", setupMp);
+}
+let setupMp = false;
+function teeOff() {
+  const me = setupSel[0];
+  const mates = setupSel.slice(1).filter(p => p.on).map(p => ({ id: p.id, name: p.name, hcp: p.hcp }));
+  // remember day handicaps for next time
+  SET.myHcp = me.hcp; saveSet();
+  const players = loadPlayers();
+  for (const m of mates) { const p = players.find(x => x.id === m.id); if (p) p.lastHcp = m.hcp; }
+  savePlayers(players);
+  startRound({ myHcp: me.hcp, mates, matchplay: setupMp && mates.length > 0 });
+}
+function addPlayerPrompt() {
+  const name = (prompt("Player name?") || "").trim();
+  if (!name) return;
+  const players = loadPlayers();
+  const p = { id: "p" + Date.now(), name, lastHcp: 18 };
+  players.push(p);
+  savePlayers(players);
+  setupSel.push({ id: p.id, name: p.name, hcp: 18, on: true });
+  renderSetup();
+}
+
+// live scoreboard
+function openBoard() {
+  const r = round || viewRound;
+  if (!r) return;
+  const rows = boardRows(r);
+  const mp = r.matchplay;
+  $("boardNote").textContent = (mp ? "MATCHPLAY · " : "") + "NETT = GROSS − DAILY HCP BY STROKE INDEX";
+  let h = '<div class="bHead' + (mp ? ' mp4' : '') + '"><div>PLAYER</div><div>THRU</div><div>GROSS</div><div>NETT</div>' + (mp ? '<div>PTS</div>' : '') + '</div>';
+  h += '<div class="glassList glass">' + rows.map((p, i) =>
+    (i ? '<div class="hairline" style="margin-left:14px;"></div>' : '') +
+    '<div class="bRow' + (mp ? ' mp4' : '') + '">' +
+      '<div><div class="bp">' + p.name + '</div><div class="bhcp">HCP ' + p.hcp + '</div></div>' +
+      '<div class="bc num"><b>' + (p.thru || "–") + '</b></div>' +
+      '<div class="bc num"><b>' + (p.thru ? p.gross : "–") + '</b><small>' + fmtDiff(p.grossDiff, p.thru) + '</small></div>' +
+      '<div class="bc num"><b>' + (p.thru ? p.nett : "–") + '</b><small>' + fmtDiff(p.nettDiff, p.thru) + '</small></div>' +
+      (mp ? '<div class="bc num"><b>' + (Math.round(p.mp * 2) / 2) + '</b></div>' : '') +
+    '</div>').join("") + '</div>';
+  $("boardBody").innerHTML = h;
+  $("boardBack").textContent = round ? "‹ Map" : "‹ Back";
+  show("boardScr");
+}
+
+function startRound(cfg) {
+  cfg = cfg || {};
+  round = { id: Date.now(), course: COURSE.name, startTs: Date.now(), hole: 1, shots: [],
+            myHcp: cfg.myHcp || 0, mates: cfg.mates || [], matchplay: !!cfg.matchplay, mateScores: {} };
   if (SET.playsLike) {
     // Rule 4.3a: measuring elevation is not allowed in competition
     if (confirm("Competition round?\n\nOK = YES — plays-like is disabled for this round (Rule 4.3a).\nCancel = casual round.")) round.compLegal = true;
@@ -1063,11 +1261,28 @@ function openScoreSheet() {
   $("ssPutts").value = d ? d.putts : putts(round.hole).length;
   $("ssScoreVal").textContent = $("ssScore").value;
   $("ssPuttsVal").textContent = $("ssPutts").value;
+  // mates: stepper per player, prefilled with existing entry or par
+  $("ssMates").innerHTML = (round.mates || []).map((m, i) => {
+    const v = mateScore(round, m.id, round.hole);
+    return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
+      '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
+      '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
+      '<button data-mi="' + i + '" data-d="1">＋</button></div></div>';
+  }).join("");
+  document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
+    const el = $("mv" + b.dataset.mi);
+    el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
+  });
   $("scoreSheet").classList.add("on");
 }
 function saveScoreAndNext() {
   round.holeScores = round.holeScores || {};
   round.holeScores[round.hole] = { score: +$("ssScore").value, putts: +$("ssPutts").value, ts: Date.now() };
+  round.mateScores = round.mateScores || {};
+  (round.mates || []).forEach((m, i) => {
+    const el = $("mv" + i);
+    if (el) (round.mateScores[m.id] = round.mateScores[m.id] || {})[round.hole] = +el.textContent;
+  });
   $("scoreSheet").classList.remove("on");
   saveCur();
   if (round.hole >= 18) { finishRound(); return; }
@@ -1587,11 +1802,18 @@ function openSummary(r) {
     '<div class="sumTile glass"><div class="tv num" style="color:' + (t.diff > 0 ? "#ffcf6b" : "#fff") + ';">' + (t.playedHoles ? toParStr(t.diff) : "–") + '</div><div class="tl">TO PAR</div></div>' +
     '<div class="sumTile glass"><div class="tv num">' + st.birdies + '</div><div class="tl">BIRDIES</div></div>';
   const row = (k, v) => '<div class="sumRow"><span class="sk">' + k + '</span><span class="sv num">' + v + '</span></div>';
-  $("sumList").innerHTML =
+  let listHtml =
     row("FAIRWAYS", st.firAll ? st.firHit + " / " + st.firAll : "no GPS data") + '<div class="hairline"></div>' +
     row("GREENS IN REG", st.gir + " / " + st.girAll) + '<div class="hairline"></div>' +
     row("PUTTS", st.puttsTot) + '<div class="hairline"></div>' +
     row("LONGEST DRIVE", st.longest ? st.longest + " m" : "–");
+  if (multi(r)) {
+    const rows = boardRows(r);
+    listHtml += '<div class="hairline"></div>' + rows.map((p, i) =>
+      row((i + 1) + ". " + p.name, (r.matchplay ? (Math.round(p.mp * 2) / 2) + " pts · " : "") + "nett " + (p.thru ? p.nett : "–"))
+    ).join('<div class="hairline"></div>');
+  }
+  $("sumList").innerHTML = listHtml;
   show("sumScr");
 }
 $("btnSaveRound").onclick = () => { sumRound = null; renderHome(); show("home"); };
@@ -1741,7 +1963,7 @@ $("cardBack").onclick = () => {
 $("cardShare").onclick = () => { if (viewRound) exportText(JSON.stringify(viewRound), "Round " + new Date(viewRound.startTs).toISOString().slice(0,10)); };
 $("btnExportRound").onclick = () => { if (viewRound) exportText(JSON.stringify(viewRound), "Round " + new Date(viewRound.startTs).toISOString().slice(0,10)); };
 $("btnEndEarly").onclick = endEarly;
-$("strip").onclick = () => { if (round) openCard(round, false); };
+$("strip").onclick = () => { if (round) { multi(round) ? openBoard() : openCard(round, false); } };
 
 // ---------- UI ----------
 function show(id) {
@@ -1924,8 +2146,14 @@ function renderHome() {
 $("btnStart").onclick = () => {
   if (loadCur() && !confirm("A round is in progress. Start a new one and discard it?")) return;
   localStorage.removeItem(LS_CUR);
-  startRound();
+  openSetup();
 };
+$("setupBack").onclick = () => { renderHome(); show("home"); };
+$("btnTeeOff").onclick = teeOff;
+$("addPlayer").onclick = addPlayerPrompt;
+$("tglMp").onclick = () => { setupMp = !setupMp; renderSetup(); };
+$("boardBack").onclick = () => { if (round) show("play"); else if (viewRound) openSummary(viewRound); else { renderHome(); show("home"); } };
+$("boardCard").onclick = () => { const r = round || viewRound; if (r) openCard(r, !round); };
 $("btnResume").onclick = resumeRound;
 $("btnHit").onclick = hit;
 $("btnPutt").onclick = addPutt;
