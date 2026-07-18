@@ -529,6 +529,13 @@ button { font-family:inherit; border:none; color:#fff; background:none; }
   <input type="range" class="slider" id="ssScore" min="1" max="12" step="1">
   <div class="slRow"><span class="slLbl">PUTTS</span><span class="slVal num" id="ssPuttsVal">2</span></div>
   <input type="range" class="slider" id="ssPutts" min="0" max="6" step="1">
+  <div class="setRow" id="ssOthersRow" style="display:none;margin-bottom:14px;">
+    <div>
+      <div class="setLbl" style="font-size:14px;">Score for others</div>
+      <div class="setSub">OFF = EVERYONE ENTERS THEIR OWN</div>
+    </div>
+    <button class="tgl" id="ssOthersTgl">OFF</button>
+  </div>
   <div id="ssMates"></div>
   <button id="ssSave">Save &amp; next hole ▸</button>
 </div>
@@ -1307,36 +1314,45 @@ function openScoreSheet() {
   $("ssPutts").value = d ? d.putts : (putts(round.hole).length || 2);
   $("ssScoreVal").textContent = $("ssScore").value;
   $("ssPuttsVal").textContent = $("ssPutts").value;
-  // mates: stepper per player, prefilled with their known score (self-entered
-  // or synced) or par. Untouched steppers only save when the player has no
-  // score yet — so this can never clobber a mate scoring themselves.
+  // Everyone scores THEMSELVES by default — mate rows only exist when the
+  // per-round "Score for others" toggle is on (keeper-of-the-card mode).
   ssDirty = new Set();
   ssHad = {};
-  $("ssMates").innerHTML = (round.mates || []).map((m, i) => {
-    const v = mateScore(round, m.id, round.hole);
-    ssHad[i] = v != null;
-    return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
-      '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
-      '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
-      '<button data-mi="' + i + '" data-d="1">＋</button></div></div>';
-  }).join("");
-  document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
-    const el = $("mv" + b.dataset.mi);
-    el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
-    ssDirty.add(+b.dataset.mi);
-  });
+  const hasMates = (round.mates || []).length > 0;
+  $("ssOthersRow").style.display = hasMates ? "flex" : "none";
+  $("ssOthersTgl").textContent = round.scoreOthers ? "ON" : "OFF";
+  $("ssOthersTgl").classList.toggle("on", !!round.scoreOthers);
+  $("ssOthersTgl").onclick = () => { round.scoreOthers = !round.scoreOthers; saveCur(); openScoreSheet(); };
+  if (round.scoreOthers && hasMates) {
+    $("ssMates").innerHTML = round.mates.map((m, i) => {
+      const v = mateScore(round, m.id, round.hole);
+      ssHad[i] = v != null;
+      return '<div class="mateRow"><div class="mn2">' + m.name + '</div>' +
+        '<div class="mateCtl"><button data-mi="' + i + '" data-d="-1">−</button>' +
+        '<div class="mv num" id="mv' + i + '">' + (v != null ? v : hole.par) + '</div>' +
+        '<button data-mi="' + i + '" data-d="1">＋</button></div></div>';
+    }).join("");
+    document.querySelectorAll("#ssMates button").forEach(b => b.onclick = () => {
+      const el = $("mv" + b.dataset.mi);
+      el.textContent = Math.max(1, Math.min(12, +el.textContent + (+b.dataset.d)));
+      ssDirty.add(+b.dataset.mi);
+    });
+  } else {
+    $("ssMates").innerHTML = "";
+  }
   $("scoreSheet").classList.add("on");
 }
 function saveScoreAndNext() {
   round.holeScores = round.holeScores || {};
   round.holeScores[round.hole] = { score: +$("ssScore").value, putts: +$("ssPutts").value, ts: Date.now() };
   round.mateScores = round.mateScores || {};
-  (round.mates || []).forEach((m, i) => {
+  // mate rows save ONLY in "Score for others" mode: edited rows always, untouched
+  // rows just when that player has no score yet. Default mode touches nobody else.
+  if (round.scoreOthers) (round.mates || []).forEach((m, i) => {
     const el = $("mv" + i);
-    // save only if edited here, or the player has no score yet (keeper-of-the-card
-    // default); an untouched stepper never overwrites a mate's own entry
     if (el && (ssDirty.has(i) || !ssHad[i])) {
       const v = +el.textContent;
+      if (!(v >= 1 && v <= 20)) return;
       (round.mateScores[m.id] = round.mateScores[m.id] || {})[round.hole] = v;
       queueScore(m.id, round.hole, v, null);
     }
