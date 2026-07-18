@@ -11,10 +11,6 @@ const face = (fam, w, file) => {
   const b64 = fs.readFileSync(path.join(B, file)).toString('base64');
   faces.push(`@font-face{font-family:'${fam}';font-style:normal;font-weight:${w};font-display:swap;src:url(data:font/woff2;base64,${b64}) format('woff2');}`);
 };
-face('Space Grotesk', 400, 'sg-400.woff2');
-face('Space Grotesk', 500, 'sg-500.woff2');
-face('Space Grotesk', 600, 'sg-600.woff2');
-face('Space Grotesk', 700, 'sg-700.woff2');
 face('JetBrains Mono', 400, 'jbm-400.woff2');
 face('JetBrains Mono', 500, 'jbm-500.woff2');
 face('JetBrains Mono', 700, 'jbm-700.woff2');
